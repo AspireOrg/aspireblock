@@ -7,7 +7,7 @@ import redis
 import redis.connection
 redis.connection.socket = gevent.socket  # make redis play well with gevent
 
-from counterblock.lib import config, util
+from aspireblock.lib import config, util
 
 DEFAULT_REDIS_CACHE_PERIOD = 60  # in seconds
 

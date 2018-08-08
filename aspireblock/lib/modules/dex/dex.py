@@ -6,7 +6,7 @@ import json
 import calendar
 import time
 
-from counterblock.lib import cache, config, util
+from aspireblock.lib import cache, config, util
 
 decimal.setcontext(decimal.Context(prec=8, rounding=decimal.ROUND_HALF_EVEN))
 D = decimal.Decimal
@@ -45,8 +45,8 @@ def get_pairs_with_orders(addresses=[], max_pairs=12):
     sql = '''SELECT (MIN(give_asset, get_asset) || '/' || MAX(give_asset, get_asset)) AS pair,
                     COUNT(*) AS order_count
              FROM orders
-             WHERE give_asset != get_asset AND status = ? {} 
-             GROUP BY pair 
+             WHERE give_asset != get_asset AND status = ? {}
+             GROUP BY pair
              ORDER BY order_count DESC
              LIMIT ?'''.format(sources)
 
@@ -111,7 +111,7 @@ def get_pairs(quote_asset='XCP', exclude_pairs=[], max_pairs=12, from_time=None)
 
     if len(priority_quote_assets) > 0:
         asset_bindings = ','.join(['?' for e in range(0, len(priority_quote_assets))])
-        sql += '''WHERE ((forward_asset = ? AND backward_asset NOT IN ({})) 
+        sql += '''WHERE ((forward_asset = ? AND backward_asset NOT IN ({}))
                          OR (forward_asset NOT IN ({}) AND backward_asset = ?)) '''.format(asset_bindings, asset_bindings)
         bindings += [quote_asset] + priority_quote_assets + priority_quote_assets + [quote_asset]
     else:
@@ -131,9 +131,9 @@ def get_pairs(quote_asset='XCP', exclude_pairs=[], max_pairs=12, from_time=None)
 
     bindings += ['completed', max_pairs]
 
-    sql = '''SELECT base_asset, quote_asset, pair, SUM(bq) AS base_quantity, SUM(qq) AS quote_quantity 
-             FROM ({}) 
-             GROUP BY pair 
+    sql = '''SELECT base_asset, quote_asset, pair, SUM(bq) AS base_quantity, SUM(qq) AS quote_quantity
+             FROM ({})
+             GROUP BY pair
              ORDER BY quote_quantity DESC
              LIMIT ?'''.format(sql)
 
@@ -234,7 +234,7 @@ def get_market_orders(asset1, asset2, addresses=[], supplies=None, min_fee_provi
     buy_orders = []
     sell_orders = []
 
-    sql = '''SELECT orders.*, blocks.block_time FROM orders INNER JOIN blocks ON orders.block_index=blocks.block_index 
+    sql = '''SELECT orders.*, blocks.block_time FROM orders INNER JOIN blocks ON orders.block_index=blocks.block_index
              WHERE  status = ? '''
     bindings = ['open']
 
@@ -242,9 +242,9 @@ def get_market_orders(asset1, asset2, addresses=[], supplies=None, min_fee_provi
         sql += '''AND source IN ({}) '''.format(','.join(['?' for e in range(0, len(addresses))]))
         bindings += addresses
 
-    sql += '''AND give_remaining > 0 
-              AND give_asset IN (?, ?) 
-              AND get_asset IN (?, ?) 
+    sql += '''AND give_remaining > 0
+              AND give_asset IN (?, ?)
+              AND get_asset IN (?, ?)
               ORDER BY tx_index DESC'''
 
     bindings += [asset1, asset2, asset1, asset2]
@@ -342,8 +342,8 @@ def get_market_trades(asset1, asset2, addresses=[], limit=50, supplies=None):
 
     sql = '''SELECT order_matches.*, blocks.block_time FROM order_matches INNER JOIN blocks ON order_matches.block_index=blocks.block_index
              WHERE status != ? {}
-                AND forward_asset IN (?, ?) 
-                AND backward_asset IN (?, ?) 
+                AND forward_asset IN (?, ?)
+                AND backward_asset IN (?, ?)
              ORDER BY block_index DESC
              LIMIT ?'''.format(sources)
 
@@ -409,8 +409,8 @@ def get_assets_supply(assets=[]):
         assets.remove('BTC')
 
     if len(assets) > 0:
-        sql = '''SELECT asset, SUM(quantity) AS supply, divisible FROM issuances 
-                 WHERE asset IN ({}) 
+        sql = '''SELECT asset, SUM(quantity) AS supply, divisible FROM issuances
+                 WHERE asset IN ({})
                  AND status = ?
                  GROUP BY asset
                  ORDER BY asset'''.format(','.join(['?' for e in range(0, len(assets))]))
@@ -428,9 +428,9 @@ def get_pair_price(base_asset, quote_asset, max_block_time=None, supplies=None):
     if not supplies:
         supplies = get_assets_supply([base_asset, quote_asset])
 
-    sql = '''SELECT *, MAX(tx0_index, tx1_index) AS tx_index, blocks.block_time 
+    sql = '''SELECT *, MAX(tx0_index, tx1_index) AS tx_index, blocks.block_time
              FROM order_matches INNER JOIN blocks ON order_matches.block_index = blocks.block_index
-             WHERE 
+             WHERE
                 forward_asset IN (?, ?) AND
                 backward_asset IN (?, ?) '''
     bindings = [base_asset, quote_asset, base_asset, quote_asset]

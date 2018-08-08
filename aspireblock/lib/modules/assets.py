@@ -1,7 +1,7 @@
 """
-Implements counterwallet asset-related support as a counterblock plugin
+Implements aspirewallet asset-related support as a aspireblock plugin
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -20,9 +20,9 @@ import calendar
 
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.modules import ASSETS_PRIORITY_PARSE_ISSUANCE, ASSETS_PRIORITY_BALANCE_CHANGE
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.modules import ASSETS_PRIORITY_PARSE_ISSUANCE, ASSETS_PRIORITY_BALANCE_CHANGE
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
 
 ASSET_MAX_RETRY = 3
 
@@ -134,9 +134,9 @@ def task_compile_extended_asset_info():
 @API.add_method
 def get_normalized_balances(addresses):
     """
-    This call augments counterparty's get_balances with a normalized_quantity field. It also will include any owned
-    assets for an address, even if their balance is zero. 
-    NOTE: Does not retrieve BTC balance. Use get_address_info for that.
+    This call augments aspire's get_balances with a normalized_quantity field. It also will include any owned
+    assets for an address, even if their balance is zero.
+    NOTE: Does not retrieve GASP balance. Use get_address_info for that.
     """
     if not isinstance(addresses, list):
         raise Exception("addresses must be a list of addresses, even if it just contains one address")
@@ -163,7 +163,7 @@ def get_normalized_balances(addresses):
         if not d['quantity'] and ((d['address'] + d['asset']) not in isowner):
             continue  # don't include balances with a zero asset value
         asset_info = config.mongo_db.tracked_assets.find_one({'asset': d['asset']})
-        divisible = True  # XCP and BTC
+        divisible = True  # ASP and GASP
         if asset_info and 'divisible' in asset_info:
             divisible = asset_info['divisible']
         d['normalized_quantity'] = blockchain.normalize_quantity(d['quantity'], divisible)
@@ -195,21 +195,21 @@ def get_escrowed_balances(addresses):
             FROM orders
             WHERE source IN ({}) AND status = ? AND give_asset != ?
             GROUP BY source_asset'''.format(addresses_holder)
-    bindings = addresses + ['open', 'BTC']
+    bindings = addresses + ['open', config.BTC]
     results = util.call_jsonrpc_api("sql", {'query': sql, 'bindings': bindings}, abort_on_error=True)['result']
 
     sql = '''SELECT (tx0_address || '_' || forward_asset) AS source_asset, tx0_address AS address, forward_asset AS asset, SUM(forward_quantity) AS quantity
              FROM order_matches
              WHERE tx0_address IN ({}) AND forward_asset != ? AND status = ?
              GROUP BY source_asset'''.format(addresses_holder)
-    bindings = addresses + ['BTC', 'pending']
+    bindings = addresses + [config.BTC, 'pending']
     results += util.call_jsonrpc_api("sql", {'query': sql, 'bindings': bindings}, abort_on_error=True)['result']
 
     sql = '''SELECT (tx1_address || '_' || backward_asset) AS source_asset, tx1_address AS address, backward_asset AS asset, SUM(backward_quantity) AS quantity
              FROM order_matches
              WHERE tx1_address IN ({}) AND backward_asset != ? AND status = ?
              GROUP BY source_asset'''.format(addresses_holder)
-    bindings = addresses + ['BTC', 'pending']
+    bindings = addresses + [config.BTC, 'pending']
     results += util.call_jsonrpc_api("sql", {'query': sql, 'bindings': bindings}, abort_on_error=True)['result']
 
     sql = '''SELECT source AS address, '{}' AS asset, SUM(wager_remaining) AS quantity
@@ -263,9 +263,9 @@ def get_assets_info(assetsList):
         # BTC and XCP.
         if asset in [config.BTC, config.XCP]:
             if asset == config.BTC:
-                supply = blockchain.get_btc_supply(self.proxy, normalize=False)
+                supply = blockchain.get_gasp_supply(self.proxy, normalize=False)
             else:
-                supply = util.call_jsonrpc_api("get_supply", {'asset': 'XCP'}, abort_on_error=True)['result']
+                supply = util.call_jsonrpc_api("get_supply", {'asset': config.XCP}, abort_on_error=True)['result']
 
             assets_info.append({
                 'asset': asset,
@@ -447,7 +447,7 @@ def get_asset_history(asset, reverse=False):
 @API.add_method
 def get_balance_history(asset, addresses, normalize=True, start_ts=None, end_ts=None):
     """Retrieves the ordered balance history for a given address (or list of addresses) and asset pair, within the specified date range
-    @param normalize: If set to True, return quantities that (if the asset is divisible) have been divided by 100M (satoshi). 
+    @param normalize: If set to True, return quantities that (if the asset is divisible) have been divided by 100M (satoshi).
     @return: A list of tuples, with the first entry of each tuple being the block time (epoch TS), and the second being the new balance
      at that block time.
     """

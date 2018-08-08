@@ -4,8 +4,8 @@ import json
 import time
 import logging
 
-from counterblock.lib import blockfeed, blockchain, config, cache, database, util
-from counterblock.lib.processor import StartUpProcessor, CORE_FIRST_PRIORITY, CORE_LAST_PRIORITY, api, start_task
+from aspireblock.lib import blockfeed, blockchain, config, cache, database, util
+from aspireblock.lib.processor import StartUpProcessor, CORE_FIRST_PRIORITY, CORE_LAST_PRIORITY, api, start_task
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def init_redis():
 
 @StartUpProcessor.subscribe(priority=CORE_LAST_PRIORITY - 0)  # must come after all plugins have been initalized
 def start_cp_blockfeed():
-    logger.info("Starting up counterparty block feed poller...")
+    logger.info("Starting up aspire block feed poller...")
     start_task(blockfeed.process_cp_blockfeed)
 
 

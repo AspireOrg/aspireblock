@@ -1,8 +1,8 @@
 """
 track message types, for compiling of statistics
-Implements transaction stats support as a counterblock plugin
+Implements transaction stats support as a aspireblock plugin
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -17,8 +17,8 @@ import pymongo
 from bson.son import SON
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
 
 logger = logging.getLogger(__name__)
 

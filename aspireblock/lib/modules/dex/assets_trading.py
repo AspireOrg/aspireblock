@@ -12,7 +12,7 @@ import calendar
 
 import pymongo
 
-from counterblock.lib import config, database, util, blockchain
+from aspireblock.lib import config, database, util, blockchain
 
 D = decimal.Decimal
 logger = logging.getLogger(__name__)
@@ -113,10 +113,10 @@ def get_asset_info(asset, at_dt=None):
     if asset == config.BTC:
         if at_dt:
             start_block_index, end_block_index = database.get_block_indexes_for_dates(end_dt=at_dt)
-            asset_info['total_issued'] = blockchain.get_btc_supply(normalize=False, at_block_index=end_block_index)
+            asset_info['total_issued'] = blockchain.get_gasp_supply(normalize=False, at_block_index=end_block_index)
             asset_info['total_issued_normalized'] = blockchain.normalize_quantity(asset_info['total_issued'])
         else:
-            asset_info['total_issued'] = blockchain.get_btc_supply(normalize=False)
+            asset_info['total_issued'] = blockchain.get_gasp_supply(normalize=False)
             asset_info['total_issued_normalized'] = blockchain.normalize_quantity(asset_info['total_issued'])
     elif asset == config.XCP:
         # BUG: this does not take end_dt (if specified) into account. however, the deviation won't be too big
@@ -402,7 +402,7 @@ def compile_7d_market_info(asset):
 
 
 def compile_asset_pair_market_info():
-    """Compiles the pair-level statistics that show on the View Prices page of counterwallet, for instance"""
+    """Compiles the pair-level statistics that show on the View Prices page of aspirewallet, for instance"""
     # loop through all open orders, and compile a listing of pairs, with a count of open orders for each pair
     end_dt = datetime.datetime.utcnow()
     start_dt = end_dt - datetime.timedelta(days=1)
@@ -541,7 +541,7 @@ def compile_asset_market_info():
     """Run through all assets and compose and store market ranking information."""
 
     if not config.state['caught_up']:
-        logger.warn("Not updating asset market info as counterblockd is not caught up.")
+        logger.warn("Not updating asset market info as aspireblockd is not caught up.")
         return False
 
     # grab the last block # we processed assets data off of

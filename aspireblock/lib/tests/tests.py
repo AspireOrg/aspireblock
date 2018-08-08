@@ -18,12 +18,12 @@ early_exit_block = 313000
 logger = logging.getLogger(__name__)
 
 if __name__ != '__main__':
-    from counterblock.lib import config
-    from counterblock.lib.processor import processor
+    from aspireblock.lib import config
+    from aspireblock.lib.processor import processor
 
     @processor.StartUpProcessor.subscribe()
     def reparse_timer_start():
-        config.BLOCK_FIRST = 281000
+        config.BLOCK_FIRST = 0
         config.REPARSE_FORCED = True
         config.state['timer'] = time.time()
         msg = ", Early exit set to %i" % early_exit_block if early_exit_block else ", Early exit is turned Off"
@@ -31,11 +31,11 @@ if __name__ != '__main__':
 
     @processor.CaughtUpProcessor.subscribe(priority=90, enabled=False)
     def reparse_timer_stop():
-        msg = "Caught up To Blockchain" if config.state['caught_up'] else "Timer stopped at %i, Counterpartyd is at %i" % (config.state['my_latest_block']['block_index'], config.state['cp_latest_block_index'])
+        msg = "Caught up To Blockchain" if config.state['caught_up'] else "Timer stopped at %i, Aspired is at %i" % (config.state['my_latest_block']['block_index'], config.state['cp_latest_block_index'])
         logger.warn("%s, time elapsed %s" % (msg, time.time() - config.state['timer']))
 
     @processor.BlockProcessor.subscribe()
-    def stop_counterblockd():
+    def stop_aspireblockd():
         if (config.state['my_latest_block']['block_index'] == early_exit_block) or (early_exit_block is None and config.state['caught_up']):
             if early_exit_block:
                 logger.warn("exitting at %s..." % config.state['my_latest_block']['block_index'])
@@ -74,7 +74,7 @@ def get_dbhash_file_path():
     try:
         dbhash_file = os.path.join(config.DATA_DIR, "dbhashes.txt")
     except:
-        dbhash_file = os.path.join(appdirs.user_data_dir(appauthor='Counterparty', appname='counterblockd', roaming=True), "dbhashes.txt")
+        dbhash_file = os.path.join(appdirs.user_data_dir(appauthor='Aspire', appname='aspireblockd', roaming=True), "dbhashes.txt")
     return dbhash_file
 
 

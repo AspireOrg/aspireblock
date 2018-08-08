@@ -4,7 +4,7 @@ import imp
 import logging
 from configobj import ConfigObj
 
-from counterblock.lib import config
+from aspireblock.lib import config
 
 logger = logging.getLogger(__name__)
 

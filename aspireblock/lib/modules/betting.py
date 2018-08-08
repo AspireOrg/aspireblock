@@ -1,5 +1,5 @@
 """
-Implements counterwallet enhanced asset info and betting feed support as a counterblock plugin
+Implements aspirewallet enhanced asset info and betting feed support as a aspireblock plugin
 
 Python 3.x since v1.4.0
 """
@@ -21,9 +21,9 @@ import flask
 import jsonrpc
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.modules import BETTING_PRIORITY_PARSE_BROADCAST
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.modules import BETTING_PRIORITY_PARSE_BROADCAST
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
 
 FEED_MAX_RETRY = 3
 

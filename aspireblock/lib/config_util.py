@@ -13,7 +13,7 @@ import appdirs
 import hashlib
 import decimal
 
-from counterblock.lib import config
+from aspireblock.lib import config
 
 D = decimal.Decimal
 logger = logging.getLogger(__name__)
@@ -106,23 +106,23 @@ def generate_config_file(filename, config_args, known_config={}, overwrite=False
     os.chmod(filename, 0o660)
 
 
-def extract_bitcoincore_config():
+def extract_aspiregas_config():
     bitcoincore_config = {}
 
-    # Figure out the path to the bitcoin.conf file
+    # Figure out the path to the aspiregas.conf file
     if platform.system() == 'Darwin':
-        btc_conf_file = os.path.expanduser('~/Library/Application Support/Bitcoin/')
+        btc_conf_file = os.path.expanduser('~/Library/Application Support/AspireGas/')
     elif platform.system() == 'Windows':
-        btc_conf_file = os.path.join(os.environ['APPDATA'], 'Bitcoin')
+        btc_conf_file = os.path.join(os.environ['APPDATA'], 'AspireGas')
     else:
-        btc_conf_file = os.path.expanduser('~/.bitcoin')
-    btc_conf_file = os.path.join(btc_conf_file, 'bitcoin.conf')
+        btc_conf_file = os.path.expanduser('~/.aspiregas')
+    btc_conf_file = os.path.join(btc_conf_file, 'aspiregas.conf')
 
-    # Extract contents of bitcoin.conf to build service_url
+    # Extract contents of aspiregas.conf to build service_url
     if os.path.exists(btc_conf_file):
         conf = {}
         with open(btc_conf_file, 'r') as fd:
-            # Bitcoin Core accepts empty rpcuser, not specified in btc_conf_file
+            # AspireGas Core accepts empty rpcuser, not specified in btc_conf_file
             for line in fd.readlines():
                 if '#' in line or '=' not in line:
                     continue
@@ -138,17 +138,17 @@ def extract_bitcoincore_config():
 
             for bitcoind_key in config_keys:
                 if bitcoind_key in conf:
-                    counterparty_key = config_keys[bitcoind_key]
-                    bitcoincore_config[counterparty_key] = conf[bitcoind_key]
+                    aspire_key = config_keys[bitcoind_key]
+                    bitcoincore_config[aspire_key] = conf[bitcoind_key]
 
     return bitcoincore_config
 
 
-def extract_counterparty_server_config():
-    counterparty_server_config = {}
+def extract_aspire_server_config():
+    aspire_server_config = {}
 
     # Figure out the path to the server.conf file
-    configdir = appdirs.user_config_dir(appauthor=config.XCP_NAME, appname=config.COUNTERPARTY_APP_NAME, roaming=True)
+    configdir = appdirs.user_config_dir(appauthor=config.XCP_NAME, appname=config.aspire_APP_NAME, roaming=True)
     server_configfile = os.path.join(configdir, 'server.conf')
 
     # Extract contents of server.conf to build service_url
@@ -166,21 +166,21 @@ def extract_counterparty_server_config():
                 'backend-port': 'backend-port',
                 'backend-user': 'backend-user',
                 'backend-password': 'backend-password',
-                'rpc-port': 'counterparty-port',
-                'rpc-user': 'counterparty-user',
-                'rpc-password': 'counterparty-password',
+                'rpc-port': 'aspire-port',
+                'rpc-user': 'aspire-user',
+                'rpc-password': 'aspire-password',
             }
 
             for server_key in config_keys:
                 if server_key in conf:
-                    counterparty_key = config_keys[server_key]
-                    counterparty_server_config[counterparty_key] = conf[server_key]
+                    aspire_key = config_keys[server_key]
+                    aspire_server_config[aspire_key] = conf[server_key]
 
-    return counterparty_server_config
+    return aspire_server_config
 
 
 def generate_config_files():
-    from counterblock.server import CONFIG_ARGS
+    from aspireblock.server import CONFIG_ARGS
 
     data_dir, config_dir, log_dir = config.get_dirs()
     if not os.path.isdir(data_dir):
@@ -195,9 +195,9 @@ def generate_config_files():
         # extract known configuration
         server_known_config = {}
 
-        bitcoincore_config = extract_bitcoincore_config()
-        server_known_config.update(bitcoincore_config)
-        counterparty_server_config = extract_counterparty_server_config()
-        server_known_config.update(counterparty_server_config)
+        aspiregas_config = extract_aspiregas_config()
+        server_known_config.update(aspiregas_config)
+        aspire_server_config = extract_aspire_server_config()
+        server_known_config.update(aspire_server_config)
 
         generate_config_file(server_configfile, CONFIG_ARGS, server_known_config)

@@ -1,9 +1,9 @@
 """
-Implements counterwallet asset-related support as a counterblock plugin
+Implements aspirewallet asset-related support as a aspireblock plugin
 
 DEPENDENCIES: This module requires the assets module to be loaded before it.
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -24,9 +24,9 @@ import pymongo
 from bson.son import SON
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.modules import DEX_PRIORITY_PARSE_TRADEBOOK
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.modules import DEX_PRIORITY_PARSE_TRADEBOOK
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
 from . import assets_trading, dex
 
 D = decimal.Decimal
@@ -154,7 +154,7 @@ def get_market_price_history(asset1, asset2, start_ts=None, end_ts=None, as_dict
         * If as_dict is False, each embedded list has 8 elements [block time (epoch in MS), open, high, low, close, volume, # trades in block, block index]
         * If as_dict is True, each dict in the list has the keys: block_time (epoch in MS), block_index, open, high, low, close, vol, count
 
-    Aggregate on an an hourly basis 
+    Aggregate on an an hourly basis
     """
     now_ts = calendar.timegm(time.gmtime())
     if not end_ts:  # default to current datetime
@@ -498,7 +498,7 @@ def get_order_book_buysell(buy_asset, sell_asset, pct_fee_provided=None, pct_fee
 
 @API.add_method
 def get_users_pairs(addresses=[], max_pairs=12):
-    return dex.get_users_pairs(addresses, max_pairs, quote_assets=['XCP', 'XBTC'])
+    return dex.get_users_pairs(addresses, max_pairs, quote_assets=[config.XCP, 'X{}'.format(config.BTC)])
 
 
 @API.add_method
