@@ -1,7 +1,7 @@
 """
-Implements counterwallet support as a counterblock plugin
+Implements aspirewallet support as a aspireblock plugin
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -21,11 +21,11 @@ import calendar
 
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain, messages
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
-from counterblock.lib.modules import CWALLET_PRIORITY_PARSE_FOR_SOCKETIO, CWALLET_PRIORITY_PUBLISH_MEMPOOL
+from aspireblock.lib import config, util, blockfeed, blockchain, messages
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
+from aspireblock.lib.modules import CWALLET_PRIORITY_PARSE_FOR_SOCKETIO, CWALLET_PRIORITY_PUBLISH_MEMPOOL
 
-from counterblock.lib.processor import startup
+from aspireblock.lib.processor import startup
 
 PREFERENCES_MAX_LENGTH = 100000  # in bytes, as expressed in JSON
 ARMORY_UTXSVR_PORT_MAINNET = 6590
@@ -41,20 +41,20 @@ module_config = {}
 def _read_config():
     configfile = configparser.SafeConfigParser(
         defaults=os.environ, allow_no_value=True, inline_comment_prefixes=('#', ';'))
-    config_path = os.path.join(config.config_dir, 'counterwallet%s.conf' % config.net_path_part)
+    config_path = os.path.join(config.config_dir, 'aspirewallet%s.conf' % config.net_path_part)
     logger.info("Loading config at: %s" % config_path)
     try:
         configfile.read(config_path)
         assert configfile.has_section('Default')
     except:
-        logging.warn("Could not find or parse counterwallet%s.conf config file!" % config.net_path_part)
+        logging.warn("Could not find or parse aspirewallet%s.conf config file!" % config.net_path_part)
 
     # armory-utxsvr
     if configfile.has_option('Default', 'armory-utxsvr-host'):
         module_config['ARMORY_UTXSVR_HOST'] = configfile.get('Default', 'armory-utxsvr-host')
     else:
         module_config['ARMORY_UTXSVR_HOST'] = "127.0.0.1"
-    
+
     # email-related
     if configfile.has_option('Default', 'support-email'):
         module_config['SUPPORT_EMAIL'] = configfile.get('Default', 'support-email')
@@ -600,7 +600,7 @@ def init():
     module_config['GEOIP'] = pygeoip.GeoIP(geoip_data_path)
 
     if not module_config['SUPPORT_EMAIL']:
-        logger.warn("Support email setting not set: To enable, please specify an email for the 'support-email' setting in your counterblockd.conf")
+        logger.warn("Support email setting not set: To enable, please specify an email for the 'support-email' setting in your aspireblockd.conf")
 
 
 @RollbackProcessor.subscribe()

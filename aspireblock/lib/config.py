@@ -3,33 +3,33 @@
 ##
 # CONSTANTS
 ##
-VERSION = "1.4.0"  # should keep up with counterblockd repo's release tag
+VERSION = "1.4.0"  # should keep up with aspireblockd repo's release tag
 
-DB_VERSION = 24  # a db version increment will cause counterblockd to rebuild its database off of counterpartyd
+DB_VERSION = 24  # a db version increment will cause aspireblockd to rebuild its database off of aspired
 
 UNIT = 100000000
 
 MARKET_PRICE_DERIVE_NUM_POINTS = 8  # number of last trades over which to derive the market price (via WVAP)
 
-# FROM counterpartyd
-# NOTE: These constants must match those in counterpartyd/lib/py
+# FROM aspired
+# NOTE: These constants must match those in aspired/lib/py
 REGULAR_DUST_SIZE = 5430
 MULTISIG_DUST_SIZE = 5430 * 2
 ORDER_BTC_DUST_LIMIT_CUTOFF = MULTISIG_DUST_SIZE
 
-BTC = 'BTC'
-XCP = 'XCP'
+BTC = 'GASP'
+XCP = 'ASP'
 
-BTC_NAME = "Bitcoin"
-XCP_NAME = "Counterparty"
-APP_NAME = "counterblock"
-COUNTERPARTY_APP_NAME = XCP_NAME.lower()
+BTC_NAME = "AspireGas"
+XCP_NAME = "Aspire"
+APP_NAME = "aspireblock"
+ASPIRE_APP_NAME = XCP_NAME.lower()
 
 MAX_REORG_NUM_BLOCKS = 10  # max reorg we'd likely ever see
 MAX_FORCED_REORG_NUM_BLOCKS = 20  # but let us go deeper when messages are out of sync
 
-QUOTE_ASSETS = ['BTC', 'XBTC', 'XCP']  # define the priority for quote asset
-MARKET_LIST_QUOTE_ASSETS = ['XCP', 'XBTC', 'BTC']  # define the order in the market list
+QUOTE_ASSETS = ['GASP', 'XGASP', 'ASP']  # define the priority for quote asset
+MARKET_LIST_QUOTE_ASSETS = ['ASP', 'XGASP', 'GASP']  # define the order in the market list
 
 DEFAULT_BACKEND_PORT_TESTNET = 18332
 DEFAULT_BACKEND_PORT = 8332
@@ -42,7 +42,7 @@ DEFAULT_LOG_NUM_FILES = 5
 ##
 mongo_db = None  # will be set on server init
 state = {
-    'caught_up': False  # atomic state variable, set to True when counterpartyd AND counterblockd are caught up
+    'caught_up': False  # atomic state variable, set to True when aspired AND aspireblockd are caught up
     # the rest of this is added dynamically
 }
 
@@ -75,10 +75,7 @@ def init_base(args):
 
     # first block
     global BLOCK_FIRST
-    if TESTNET:
-        BLOCK_FIRST = 310000
-    else:
-        BLOCK_FIRST = 278270
+    BLOCK_FIRST = 0
 
     global LATEST_BLOCK_INIT
     LATEST_BLOCK_INIT = {'block_index': BLOCK_FIRST, 'block_time': None, 'block_hash': None}
@@ -92,7 +89,7 @@ def init_base(args):
     ##############
     # THINGS WE CONNECT TO
 
-    # backend (e.g. bitcoind)
+    # backend (e.g. aspiregasd)
     global BACKEND_CONNECT
     if args.backend_connect:
         BACKEND_CONNECT = args.backend_connect
@@ -131,41 +128,41 @@ def init_base(args):
     global BACKEND_URL_NOAUTH
     BACKEND_URL_NOAUTH = 'http://' + BACKEND_CONNECT + ':' + str(BACKEND_PORT) + '/'
 
-    # counterpartyd RPC connection
-    global COUNTERPARTY_CONNECT
-    if args.counterparty_connect:
-        COUNTERPARTY_CONNECT = args.counterparty_connect
+    # aspired RPC connection
+    global ASPIRE_CONNECT
+    if args.aspire_connect:
+        ASPIRE_CONNECT = args.aspire_connect
     else:
-        COUNTERPARTY_CONNECT = 'localhost'
+        ASPIRE_CONNECT = 'localhost'
 
-    global COUNTERPARTY_PORT
-    if args.counterparty_port:
-        COUNTERPARTY_PORT = args.counterparty_port
+    global ASPIRE_PORT
+    if args.aspire_port:
+        ASPIRE_PORT = args.aspire_port
     else:
-        COUNTERPARTY_PORT = 14000 if TESTNET else 4000
+        ASPIRE_PORT = 14000 if TESTNET else 4000
     try:
-        COUNTERPARTY_PORT = int(COUNTERPARTY_PORT)
-        assert int(COUNTERPARTY_PORT) > 1 and int(COUNTERPARTY_PORT) < 65535
+        ASPIRE_PORT = int(ASPIRE_PORT)
+        assert int(ASPIRE_PORT) > 1 and int(ASPIRE_PORT) < 65535
     except:
-        raise Exception("Please specify a valid port number for the counterparty-port configuration parameter")
+        raise Exception("Please specify a valid port number for the aspire-port configuration parameter")
 
-    global COUNTERPARTY_USER
-    if args.counterparty_user:
-        COUNTERPARTY_USER = args.counterparty_user
+    global ASPIRE_USER
+    if args.aspire_user:
+        ASPIRE_USER = args.aspire_user
     else:
-        COUNTERPARTY_USER = 'rpc'
+        ASPIRE_USER = 'rpc'
 
-    global COUNTERPARTY_PASSWORD
-    if args.counterparty_password:
-        COUNTERPARTY_PASSWORD = args.counterparty_password
+    global ASPIRE_PASSWORD
+    if args.aspire_password:
+        ASPIRE_PASSWORD = args.aspire_password
     else:
-        COUNTERPARTY_PASSWORD = 'rpcpassword'
+        ASPIRE_PASSWORD = 'rpcpassword'
 
-    global COUNTERPARTY_RPC
-    COUNTERPARTY_RPC = 'http://' + COUNTERPARTY_CONNECT + ':' + str(COUNTERPARTY_PORT) + '/api/'
+    global ASPIRE_RPC
+    ASPIRE_RPC = 'http://' + ASPIRE_CONNECT + ':' + str(ASPIRE_PORT) + '/api/'
 
-    global COUNTERPARTY_AUTH
-    COUNTERPARTY_AUTH = (COUNTERPARTY_USER, COUNTERPARTY_PASSWORD) if (COUNTERPARTY_USER and COUNTERPARTY_PASSWORD) else None
+    global ASPIRE_AUTH
+    ASPIRE_AUTH = (ASPIRE_USER, ASPIRE_PASSWORD) if (ASPIRE_USER and ASPIRE_PASSWORD) else None
 
     # mongodb
     global MONGODB_CONNECT
@@ -189,7 +186,7 @@ def init_base(args):
     if args.mongodb_database:
         MONGODB_DATABASE = args.mongodb_database
     else:
-        MONGODB_DATABASE = 'counterblockd_testnet' if TESTNET else 'counterblockd'
+        MONGODB_DATABASE = 'aspireblockd_testnet' if TESTNET else 'aspireblockd'
 
     global MONGODB_USER
     if args.mongodb_user:
@@ -232,11 +229,6 @@ def init_base(args):
     except:
         raise Exception("Please specify a valid redis-database configuration parameter (between 0 and 16 inclusive)")
 
-    global BLOCKTRAIL_API_KEY
-    BLOCKTRAIL_API_KEY = args.blocktrail_api_key or None
-    global BLOCKTRAIL_API_SECRET
-    BLOCKTRAIL_API_SECRET = args.blocktrail_api_secret or None
-
     ##############
     # THINGS WE SERVE
 
@@ -273,8 +265,8 @@ def init_base(args):
     # OTHER SETTINGS
 
     # System (logging, pids, etc)
-    global COUNTERBLOCKD_DIR
-    COUNTERBLOCKD_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+    global ASPIREBLOCKD_DIR
+    ASPIREBLOCKD_DIR = os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
     global LOG
     if args.log_file is False:  # no file logging
@@ -325,13 +317,13 @@ def load_schemas():
     """initialize json schema for json asset and feed validation"""
     import os
     import json
-    assert COUNTERBLOCKD_DIR
+    assert ASPIREBLOCKD_DIR
 
     global ASSET_SCHEMA
-    ASSET_SCHEMA = json.load(open(os.path.join(COUNTERBLOCKD_DIR, 'schemas', 'asset.schema.json')))
+    ASSET_SCHEMA = json.load(open(os.path.join(ASPIREBLOCKD_DIR, 'schemas', 'asset.schema.json')))
 
     global FEED_SCHEMA
-    FEED_SCHEMA = json.load(open(os.path.join(COUNTERBLOCKD_DIR, 'schemas', 'feed.schema.json')))
+    FEED_SCHEMA = json.load(open(os.path.join(ASPIREBLOCKD_DIR, 'schemas', 'feed.schema.json')))
 
 
 def init(args):

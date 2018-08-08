@@ -10,7 +10,7 @@ import decimal
 from repoze.lru import lru_cache
 from pycoin import encoding
 
-from counterblock.lib import config, util
+from aspireblock.lib import config, util
 
 D = decimal.Decimal
 decimal.getcontext().prec = 8
@@ -39,32 +39,19 @@ def denormalize_quantity(quantity, divisible=True):
 
 
 def get_btc_supply(normalize=False, at_block_index=None):
-    """returns the total supply of BTC (based on what bitcoind says the current block height is)"""
-    block_count = config.state['my_latest_block']['block_index'] if at_block_index is None else at_block_index
-    blocks_remaining = block_count
-    total_supply = 0
-    reward = 50.0
-    while blocks_remaining > 0:
-        if blocks_remaining >= 210000:
-            blocks_remaining -= 210000
-            total_supply += 210000 * reward
-            reward /= 2
-        else:
-            total_supply += (blocks_remaining * reward)
-            blocks_remaining = 0
-
-    return total_supply if normalize else int(total_supply * config.UNIT)
+    """returns the total supply of GASP"""
+    return int(100000000 * config.UNIT)
 
 
 def pubkey_to_address(pubkey_hex):
     sec = binascii.unhexlify(pubkey_hex)
     compressed = encoding.is_sec_compressed(sec)
     public_pair = encoding.sec_to_public_pair(sec)
-    address_prefix = b'\x6f' if config.TESTNET else b'\x00'
+    address_prefix = b'\x25' if config.TESTNET else b'\x09'
     return encoding.public_pair_to_bitcoin_address(public_pair, compressed=compressed, address_prefix=address_prefix)
 
 
-def bitcoind_rpc(command, params):
+def aspiregasd_rpc(command, params):
     return util.call_jsonrpc_api(
         command,
         params=params,
@@ -78,7 +65,7 @@ def is_multisig(address):
     return (len(array) > 1)
 
 
-def get_btc_balance(address, confirmed=True):
+def get_gasp_balance(address, confirmed=True):
     all_unspent, confirmed_unspent = get_unspent_txouts(address, return_confirmed=True)
     unspent = confirmed_unspent if confirmed else all_unspent
     return sum(out['amount'] for out in unspent)
@@ -213,4 +200,4 @@ def get_unspent_txouts(source, return_confirmed=False):
 
 
 def broadcast_tx(signed_tx_hex):
-    return bitcoind_rpc('sendrawtransaction', [signed_tx_hex])
+    return aspiregasd_rpc('sendrawtransaction', [signed_tx_hex])

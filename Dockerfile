@@ -1,19 +1,19 @@
-FROM counterparty/base
+FROM aspireorg/federatednode
 
-MAINTAINER Counterparty Developers <dev@counterparty.io>
+MAINTAINER Aspire Developers <admin@aspirecrypto.com>
 
-# Install extra counterblock deps
+# Install extra aspireblock deps
 RUN apt-get update && apt-get -y install libjpeg8-dev libgmp-dev libzmq3-dev libxml2-dev libxslt-dev zlib1g-dev libimage-exiftool-perl libevent-dev cython
 
 # Install
-COPY . /counterblock
-WORKDIR /counterblock
+COPY . /aspireblock
+WORKDIR /aspireblock
 RUN pip3 install -r requirements.txt
 RUN python3 setup.py develop
 
-COPY docker/server.conf /root/.config/counterblock/server.conf
-COPY docker/modules.conf /root/.config/counterblock/modules.conf
-COPY docker/counterwallet.conf /root/.config/counterblock/counterwallet.conf
+COPY docker/server.conf /root/.config/aspireblock/server.conf
+COPY docker/modules.conf /root/.config/aspireblock/modules.conf
+COPY docker/aspirewallet.conf /root/.config/aspireblock/aspirewallet.conf
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod a+x /usr/local/bin/start.sh
 
