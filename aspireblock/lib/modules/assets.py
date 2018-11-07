@@ -387,6 +387,7 @@ def get_asset_history(asset, reverse=False):
     prev = None
     for i in range(len(raw)):  # oldest to newest
         if i == 0:
+            print(raw[i])
             assert raw[i]['_change_type'] == 'created'
             history.append({
                 'type': 'created',
@@ -568,7 +569,7 @@ def parse_issuance(msg, msg_data):
                 # asset, the last one with _at_block == that block id in the history array is the
                 # final version for that asset at that block
                 'asset': msg_data['asset'],
-                'asset_longname': msg_data.get('asset_longname', None), # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
+                'asset_longname': msg_data.get('asset_longname', None),  # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
                 'owner': msg_data['issuer'],
                 'description': msg_data['description'],
                 'divisible': msg_data['divisible'],
@@ -700,18 +701,22 @@ def process_rollback(max_block_index):
         config.mongo_db.tracked_assets.drop()
         config.mongo_db.asset_extended_info.drop()
         # create XCP and BTC assets in tracked_assets
-        for asset in [config.XCP, config.BTC]:
-            base_asset = {
-                'asset': asset,
-                'asset_longname': None,
+        for asset in [(config.XCP, config.XCP_NAME), (config.BTC, config.BTC_NAME)]:
+            tracked_asset = {
+                '_change_type': 'created',
+                '_at_block': config.BLOCK_FIRST,
+                '_at_block_time': datetime.datetime.utcfromtimestamp(1532325354),
+                'asset': asset[0],
+                'asset_longname': asset[1],
                 'owner': None,
-                'divisible': True,
+                'description': asset[1],
+                'divisible': 8,
                 'locked': False,
-                'total_issued': None,
-                '_at_block': config.BLOCK_FIRST,  # the block ID this asset is current for
+                'total_issued': int(1000000000 * 10**8),
+                'total_issued_normalized': blockchain.normalize_quantity(int(1000000000 * 10**8), 8),
                 '_history': []  # to allow for block rollbacks
             }
-            config.mongo_db.tracked_assets.insert(base_asset)
+            config.mongo_db.tracked_assets.insert(tracked_asset)
     else:  # rollback
         config.mongo_db.balance_changes.remove({"block_index": {"$gt": max_block_index}})
 

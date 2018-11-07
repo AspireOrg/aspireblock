@@ -72,6 +72,7 @@ def load_all():
 
 
 def toggle(mod, enabled=True):
+    imp.find_module(mod)
     try:
         imp.find_module(mod)
     except:

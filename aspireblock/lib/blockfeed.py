@@ -226,9 +226,9 @@ def process_cp_blockfeed():
         updatePrefs = False
 
         # Checking appconfig against old running info (when batch-fetching) is redundant
-        if    app_config['aspired_db_version_major'] is None \
-           or app_config['aspired_db_version_minor'] is None \
-           or app_config['aspired_running_testnet'] is None:
+        if app_config.get('aspired_db_version_major', None) is None \
+           or app_config.get('aspired_db_version_minor', None) is None \
+           or app_config.get('aspired_running_testnet', None) is None:
             logger.info("Updating version info from aspire-server")
             updatePrefs = True
         elif cp_running_info['version_major'] != app_config['aspired_db_version_major']:
@@ -266,7 +266,7 @@ def process_cp_blockfeed():
                 assert cp_running_info['last_block']['block_index']
                 config.state['cp_latest_block_index'] = cp_running_info['last_block']['block_index']
             elif cp_running_info['db_caught_up']:
-                config.state['cp_latest_block_index'] = cp_running_info['aspiregas_block_count']
+                config.state['cp_latest_block_index'] = cp_running_info['bitcoin_block_count']
             else:
                 assert False
         except:
@@ -277,7 +277,7 @@ def process_cp_blockfeed():
             time.sleep(3)
             continue
 
-        config.state['cp_backend_block_index'] = cp_running_info['aspiregas_block_count']
+        config.state['cp_backend_block_index'] = cp_running_info['bitcoin_block_count']
         config.state['cp_caught_up'] = cp_running_info['db_caught_up']
 
         if config.state['my_latest_block']['block_index'] < config.state['cp_latest_block_index']:
