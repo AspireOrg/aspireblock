@@ -1,27 +1,24 @@
+from logging import handlers as logging_handlers
+from gevent import wsgi
 import os
 import json
-import re
 import time
 import datetime
-import base64
 import decimal
-import operator
 import logging
-import copy
-import urllib.request
-import urllib.parse
-import urllib.error
 import functools
-from logging import handlers as logging_handlers
 import calendar
-
-from gevent import wsgi
 import grequests
 import flask
 import jsonrpc
-import pymongo
 
-from aspireblock.lib import config, cache, database, util, blockchain, blockfeed, messages
+from aspireblock.lib import config
+from aspireblock.lib import cache
+from aspireblock.lib import database
+from aspireblock.lib import util
+from aspireblock.lib import blockchain
+from aspireblock.lib import blockfeed
+from aspireblock.lib import messages
 from aspireblock.lib.processor import API
 
 API_MAX_LOG_SIZE = 10 * 1024 * 1024  # max log size of 20 MB before rotation (make configurable later)
@@ -74,7 +71,7 @@ def serve_api():
             result['addr'] = address
             result['info'] = info
             result['block_height'] = config.state['cp_backend_block_index']
-            #^ yeah, hacky...it will be the same block height for each address (we do this to avoid an extra API call to get_block_height)
+            # ^ yeah, hacky...it will be the same block height for each address (we do this to avoid an extra API call to get_block_height)
             if with_uxtos:
                 result['uxtos'] = blockchain.listunspent(address)
             if with_last_txn_hashes:
@@ -342,7 +339,7 @@ def serve_api():
             txns += entries
         txns = util.multikeysort(txns, ['-_block_time', '-_tx_index'])
         txns = txns[0:limit]  # TODO: we can trunk before sorting. check if we can use the messages table and use sql order and limit
-        #^ won't be a perfect sort since we don't have tx_indexes for cancellations, but better than nothing
+        # ^ won't be a perfect sort since we don't have tx_indexes for cancellations, but better than nothing
         # txns.sort(key=operator.itemgetter('block_index'))
         return txns
 
@@ -350,11 +347,7 @@ def serve_api():
     def proxy_to_aspired(method='', params=[]):
         if method == 'sql':
             raise Exception("Invalid method")
-        result = None
-        cache_key = None
-
         result = util.call_jsonrpc_api(method, params)
-
         if 'error' in result:
             if result['error'].get('data', None):
                 errorMsg = result['error']['data'].get('message', result['error']['message'])
@@ -393,7 +386,7 @@ def serve_api():
             tx_logger.info("***CSP SECURITY --- %s" % data_json)
             return flask.Response('', 200)
 
-        #"ping" aspired to test
+        # "ping" aspired to test
         cp_s = time.time()
         cp_result_valid = True
         try:
@@ -402,7 +395,7 @@ def serve_api():
             cp_result_valid = False
         cp_e = time.time()
 
-        #"ping" aspireblockd to test, as well
+        # "ping" aspireblockd to test, as well
         cb_s = time.time()
         cb_result_valid = True
         cb_result_error_code = None
@@ -447,9 +440,9 @@ def serve_api():
             'aspireblock_last_message_index': config.state['last_message_index'],
             'aspireblock_caught_up': blockfeed.fuzzy_is_caught_up(),
             'aspireblock_cur_block': {'block_hash': config.state['cur_block'].get('block_hash', '??'),
-                                       'block_index': config.state['cur_block'].get('block_index', '??')},
+                                      'block_index': config.state['cur_block'].get('block_index', '??')},
             'aspireblock_last_processed_block': {'block_hash': config.state['my_latest_block'].get('block_hash', '??'),
-                                                  'block_index': config.state['my_latest_block'].get('block_index', '??')},
+                                                 'block_index': config.state['my_latest_block'].get('block_index', '??')},
         }
 
         response_code = 200
@@ -479,7 +472,7 @@ def serve_api():
         if not blockfeed.fuzzy_is_caught_up():
             obj_error = jsonrpc.exceptions.JSONRPCServerError(data="Server is not caught up. Please try again later.")
             response = flask.Response(obj_error.json.encode(), 525, mimetype='application/json')
-            #^ 525 is a custom response code we use for this one purpose
+            # ^ 525 is a custom response code we use for this one purpose
             _set_cors_headers(response)
             return response
 
@@ -517,9 +510,7 @@ def serve_api():
 
     # make a new RotatingFileHandler for the access log.
     api_logger = logging.getLogger("api_log")
-    h = logging_handlers.RotatingFileHandler(
-        os.path.join(config.log_dir, "server%s.api.log" % config.net_path_part),
-        'a', API_MAX_LOG_SIZE, API_MAX_LOG_COUNT)
+    h = logging_handlers.RotatingFileHandler(os.path.join(config.log_dir, "server%s.api.log" % config.net_path_part), 'a', API_MAX_LOG_SIZE, API_MAX_LOG_COUNT)
     api_logger.setLevel(logging.INFO)
     api_logger.addHandler(h)
     api_logger.propagate = False

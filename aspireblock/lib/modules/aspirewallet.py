@@ -4,7 +4,6 @@ Implements aspirewallet support as a aspireblock plugin
 Python 2.x, as aspireblock is still python 2.x
 """
 import os
-import sys
 import time
 import datetime
 import logging
@@ -15,17 +14,25 @@ import urllib.error
 import json
 import pymongo
 import flask
-import jsonrpc
 import configparser
 import calendar
+import email.utils
 
-import dateutil.parser
+from aspireblock.lib import config
+from aspireblock.lib import util
+from aspireblock.lib import blockfeed
+from aspireblock.lib import messages
+from aspireblock.lib.processor import MessageProcessor
+from aspireblock.lib.processor import MempoolMessageProcessor
+from aspireblock.lib.processor import StartUpProcessor
+from aspireblock.lib.processor import CaughtUpProcessor
+from aspireblock.lib.processor import RollbackProcessor
+from aspireblock.lib.processor import API
+from aspireblock.lib.processor import start_task
+from aspireblock.lib.processor import CORE_FIRST_PRIORITY
+from aspireblock.lib.modules import CWALLET_PRIORITY_PARSE_FOR_SOCKETIO
+from aspireblock.lib.modules import CWALLET_PRIORITY_PUBLISH_MEMPOOL
 
-from aspireblock.lib import config, util, blockfeed, blockchain, messages
-from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
-from aspireblock.lib.modules import CWALLET_PRIORITY_PARSE_FOR_SOCKETIO, CWALLET_PRIORITY_PUBLISH_MEMPOOL
-
-from aspireblock.lib.processor import startup
 
 PREFERENCES_MAX_LENGTH = 100000  # in bytes, as expressed in JSON
 ARMORY_UTXSVR_PORT_MAINNET = 6590
@@ -177,13 +184,10 @@ def get_preferences(wallet_id, for_login=False, network=None):
     if not result:
         return False  # doesn't exist
 
-    last_touched_date = datetime.datetime.utcfromtimestamp(result['last_touched']).date()
-    now = datetime.datetime.utcnow()
-
     if for_login:  # record user login
         ip = flask.request.headers.get('X-Real-Ip', flask.request.remote_addr)
         ua = flask.request.headers.get('User-Agent', '')
-        config.mongo_db.login_history.insert({'wallet_id': wallet_id, 'when': now, 'network': network, 'action': 'login', 'ip': ip, 'ua': ua})
+        config.mongo_db.login_history.insert({'wallet_id': wallet_id, 'when': datetime.datetime.utcnow(), 'network': network, 'action': 'login', 'ip': ip, 'ua': ua})
 
     result['last_touched'] = calendar.timegm(time.gmtime())
     config.mongo_db.preferences.save(result)
@@ -238,14 +242,13 @@ def store_preferences(wallet_id, preferences, for_login=False, network=None, ref
             'last_touched': now_ts},
          '$setOnInsert': {'when_created': now_ts, 'network': network}
          }, upsert=True)
-    #^ last_updated MUST be in GMT, as it will be compaired again other servers
+    # ^ last_updated MUST be in GMT, as it will be compaired again other servers
     return True
 
 
 @API.add_method
 def create_armory_utx(unsigned_tx_hex, public_key_hex):
-    endpoint = "http://%s:%s/" % (module_config['ARMORY_UTXSVR_HOST'],
-        ARMORY_UTXSVR_PORT_MAINNET if not config.TESTNET else ARMORY_UTXSVR_PORT_TESTNET)
+    endpoint = "http://%s:%s/" % (module_config['ARMORY_UTXSVR_HOST'], ARMORY_UTXSVR_PORT_MAINNET if not config.TESTNET else ARMORY_UTXSVR_PORT_TESTNET)
     params = {'unsigned_tx_hex': unsigned_tx_hex, 'public_key_hex': public_key_hex}
     utx_ascii = util.call_jsonrpc_api("serialize_unsigned_tx", params=params, endpoint=endpoint, abort_on_error=True)['result']
     return utx_ascii
@@ -253,8 +256,7 @@ def create_armory_utx(unsigned_tx_hex, public_key_hex):
 
 @API.add_method
 def convert_armory_signedtx_to_raw_hex(signed_tx_ascii):
-    endpoint = "http://%s:%s/" % (module_config['ARMORY_UTXSVR_HOST'],
-        ARMORY_UTXSVR_PORT_MAINNET if not config.TESTNET else ARMORY_UTXSVR_PORT_TESTNET)
+    endpoint = "http://%s:%s/" % (module_config['ARMORY_UTXSVR_HOST'], ARMORY_UTXSVR_PORT_MAINNET if not config.TESTNET else ARMORY_UTXSVR_PORT_TESTNET)
     params = {'signed_tx_ascii': signed_tx_ascii}
     raw_tx_hex = util.call_jsonrpc_api("convert_signed_tx_to_raw_hex", params=params, endpoint=endpoint, abort_on_error=True)['result']
     return raw_tx_hex
@@ -267,10 +269,9 @@ def create_support_case(name, from_email, problem, screenshot=None, addtl_info='
     @param addtl_info: A JSON-encoded string of a dict with additional information to include in the support request
     """
     import smtplib
-    import email.utils
+    import base64
     from email.header import Header
     from email.MIMEMultipart import MIMEMultipart
-    from email.MIMEBase import MIMEBase
     from email.MIMEText import MIMEText
     from email.mime.image import MIMEImage
 
@@ -363,12 +364,12 @@ def task_generate_wallet_stats():
         new_wallets = config.mongo_db.login_history.aggregate([
             {"$match": match_criteria},
             {"$project": {
-                "year":  {"$year": "$when"},
+                "year": {"$year": "$when"},
                 "month": {"$month": "$when"},
-                "day":   {"$dayOfMonth": "$when"}
+                "day": {"$dayOfMonth": "$when"}
             }},
             {"$group": {
-                "_id":   {"year": "$year", "month": "$month", "day": "$day"},
+                "_id": {"year": "$year", "month": "$month", "day": "$day"},
                 "new_count": {"$sum": 1}
             }}
         ])
@@ -383,13 +384,13 @@ def task_generate_wallet_stats():
         referer_counts = config.mongo_db.login_history.aggregate([
             {"$match": match_criteria},
             {"$project": {
-                "year":  {"$year": "$when"},
+                "year": {"$year": "$when"},
                 "month": {"$month": "$when"},
-                "day":   {"$dayOfMonth": "$when"},
+                "day": {"$dayOfMonth": "$when"},
                 "referer": 1
             }},
             {"$group": {
-                "_id":   {"year": "$year", "month": "$month", "day": "$day", "referer": "$referer"},
+                "_id": {"year": "$year", "month": "$month", "day": "$day", "referer": "$referer"},
                 #"uniqueReferers": {"$addToSet": "$_id"},
                 "count": {"$sum": 1}
             }}
@@ -412,15 +413,15 @@ def task_generate_wallet_stats():
         logins = config.mongo_db.login_history.aggregate([
             {"$match": match_criteria},
             {"$project": {
-                "year":  {"$year": "$when"},
+                "year": {"$year": "$when"},
                 "month": {"$month": "$when"},
-                "day":   {"$dayOfMonth": "$when"},
+                "day": {"$dayOfMonth": "$when"},
                 "wallet_id": 1
             }},
             {"$group": {
-                "_id":   {"year": "$year", "month": "$month", "day": "$day"},
-                "login_count":   {"$sum": 1},
-                "distinct_wallets":   {"$addToSet": "$wallet_id"},
+                "_id": {"year": "$year", "month": "$month", "day": "$day"},
+                "login_count": {"$sum": 1},
+                "distinct_wallets": {"$addToSet": "$wallet_id"},
             }}
         ])
         for e in logins:
@@ -576,7 +577,6 @@ def init():
     import pygeoip
     geoip_data_path = os.path.join(config.data_dir, 'GeoIP.dat')
 
-
     def download_geoip_data():
         logger.info("Checking/updating GeoIP.dat ...")
         download = False
@@ -608,7 +608,7 @@ def process_rollback(max_block_index):
     if not max_block_index:  # full reparse
         config.mongo_db.wallet_stats.drop()
 
-        #clear the wallet_messages collection, and create a null entry with a message ID of 0
+        # clear the wallet_messages collection, and create a null entry with a message ID of 0
         config.mongo_db.wallet_messages.drop()
         config.mongo_db.wallet_messages.insert({
             '_id': 0,

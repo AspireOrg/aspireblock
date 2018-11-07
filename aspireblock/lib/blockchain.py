@@ -1,14 +1,7 @@
-import os
-import re
+from pycoin import encoding
 import logging
 import binascii
-import hashlib
-import json
-import datetime
 import decimal
-
-from repoze.lru import lru_cache
-from pycoin import encoding
 
 from aspireblock.lib import config, util
 
@@ -185,14 +178,14 @@ def get_pubkey_for_address(address):
 
 
 def search_raw_transactions(address, unconfirmed=True):
-    return util.call_jsonrpc_api("search_raw_transactions", {'address': address, 'unconfirmed': unconfirmed}, abort_on_error=True)['result']
+    return util.call_jsonrpc_api('search_raw_transactions', {'address': address, 'unconfirmed': unconfirmed}, abort_on_error=True)['result']
 
 
 def get_unspent_txouts(source, return_confirmed=False):
     """returns a list of unspent outputs for a specific address
     @return: A list of dicts, with each entry in the dict having the following keys:
     """
-    txouts = util.call_jsonrpc_api("get_unspent_txouts", {'address': source, 'unconfirmed': True}, abort_on_error=True)['result']
+    txouts = util.call_jsonrpc_api('get_unspent_txouts', {'address': source, 'unconfirmed': True}, abort_on_error=True)['result']
     if return_confirmed:
         return txouts, [output for output in txouts if output['confirmations'] > 0]
     else:

@@ -40,8 +40,8 @@ def decorate_message(message, for_txn_history=False):
 
     if message['_category'] in ['orders', 'order_matches', ]:
         message['_btc_below_dust_limit'] = (
-            ('forward_asset' in message and message['forward_asset'] == config.BTC and message['forward_quantity'] <= config.ORDER_BTC_DUST_LIMIT_CUTOFF)
-            or ('backward_asset' in message and message['backward_asset'] == config.BTC and message['backward_quantity'] <= config.ORDER_BTC_DUST_LIMIT_CUTOFF)
+            ('forward_asset' in message and message['forward_asset'] == config.BTC and message['forward_quantity'] <= config.ORDER_BTC_DUST_LIMIT_CUTOFF) or
+            ('backward_asset' in message and message['backward_asset'] == config.BTC and message['backward_quantity'] <= config.ORDER_BTC_DUST_LIMIT_CUTOFF)
         )
 
     if message['_category'] in ['issuances', ]:

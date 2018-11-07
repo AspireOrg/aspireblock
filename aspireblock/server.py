@@ -13,23 +13,26 @@ if not monkey.is_module_patched("os"):  # if this fails, it's because gevent sto
     monkey.patch_all()
 # disable urllib3 warnings for requests module (for now at least)
 # (note that requests is used/imported through grequests only)
-import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
+import requests
 import sys
 import os
 import argparse
-import json
 import logging
-import datetime
-import time
-import tempfile
 
-from aspireblock.lib import config, config_util, log, blockfeed, util, module, database
-from aspireblock.lib.processor import messages, caughtup, startup  # to kick off processors
+from aspireblock.lib import config
+from aspireblock.lib import config_util
+from aspireblock.lib import log
+from aspireblock.lib import blockfeed
+from aspireblock.lib import util
+from aspireblock.lib import module
+from aspireblock.lib import database
+from aspireblock.lib.processor import messages
+from aspireblock.lib.processor import startup  # to kick off processors
 from aspireblock.lib.processor import StartUpProcessor
 
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 logger = logging.getLogger(__name__)
 
 CONFIG_ARGS = [
@@ -140,6 +143,7 @@ def main():
 
     # Run Startup Functions
     StartUpProcessor.run_active_functions()
+
 
 if __name__ == '__main__':
     main()

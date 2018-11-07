@@ -154,8 +154,8 @@ class Processor(Dispatcher):
             return f
         return inner
 
-    def add_method(*args, **kwargs):
-        return subscribe(*args, **kwargs)
+    def add_method(self, *args, **kwargs):
+        return self.subscribe(*args, **kwargs)
 
     def __repr__(self):
         return str(self.method_map)
@@ -169,6 +169,7 @@ class Processor(Dispatcher):
         for func in self.active_functions():
             self.logger.debug('starting {}'.format(func['name']))
             func['function'](*args, **kwargs)
+
 
 MessageProcessor = Processor()
 MempoolMessageProcessor = Processor()

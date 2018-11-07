@@ -1,8 +1,8 @@
-import os
 import logging
 import pymongo
 
-from aspireblock.lib import config, cache, util
+from aspireblock.lib import config
+from aspireblock.lib import cache
 from aspireblock.lib.processor import RollbackProcessor
 
 logger = logging.getLogger(__name__)

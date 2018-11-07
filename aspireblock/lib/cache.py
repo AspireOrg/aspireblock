@@ -1,5 +1,3 @@
-import os
-import hashlib
 import logging
 import json
 import gevent
