@@ -1,11 +1,11 @@
 import logging
-import pymongo
 import sys
-import gevent
 import decimal
 
-from aspireblock.lib import util, config, blockchain, blockfeed, database, messages
-from aspireblock.lib.processor import MessageProcessor, CORE_FIRST_PRIORITY, CORE_LAST_PRIORITY, api
+from aspireblock.lib import config
+from aspireblock.lib import database
+from aspireblock.lib.processor import MessageProcessor
+from aspireblock.lib.processor import CORE_FIRST_PRIORITY
 
 D = decimal.Decimal
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ def handle_reorg(msg, msg_data):
         # prune back to and including the specified message_index
         database.rollback(msg_data['block_index'] - 1)
         assert config.state['my_latest_block']['block_index'] == msg_data['block_index'] - 1
-        #^ this wil reset config.state['last_message_index'] to -1, which will be restored as we exit the message processing loop
+        # ^ this wil reset config.state['last_message_index'] to -1, which will be restored as we exit the message processing loop
 
         # abort the current block processing
         return 'ABORT_BLOCK_PROCESSING'

@@ -5,10 +5,6 @@ aspireblock
 
 With its set of core-plugins, `aspireblock` provides a more high-level data processing, and an API that layers on top of `aspire-server`’s API. `aspireblock` generates and allows querying of data such as market and price information, trade operations, asset history, and more. It is used extensively by Aspirewallet itself, and is appropriate for use by applications that require additional API-based functionality beyond the scope of what `aspire-server` itself provides.
 
-# Installation
-
-For a simple Docker-based install of the Aspire software stack, see [this guide](http://counterparty.io/docs/federated_node/).
-
 # Manual installation
 
 (Linux only.) First, install `mongodb` and `redis`, and have an instance of `aspiregasd` and [`aspire-server`](https://github.com/AspireOrg/aspire-lib) running.

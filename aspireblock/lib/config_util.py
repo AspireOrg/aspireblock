@@ -148,7 +148,7 @@ def extract_aspire_server_config():
     aspire_server_config = {}
 
     # Figure out the path to the server.conf file
-    configdir = appdirs.user_config_dir(appauthor=config.XCP_NAME, appname=config.aspire_APP_NAME, roaming=True)
+    configdir = appdirs.user_config_dir(appauthor=config.XCP_NAME, appname=config.ASPIRE_APP_NAME, roaming=True)
     server_configfile = os.path.join(configdir, 'server.conf')
 
     # Extract contents of server.conf to build service_url

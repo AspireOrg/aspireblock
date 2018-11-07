@@ -3,27 +3,20 @@ Implements aspirewallet enhanced asset info and betting feed support as a aspire
 
 Python 3.x since v1.4.0
 """
-import os
-import sys
-import time
-import datetime
 import logging
 import decimal
-import urllib.request
-import urllib.parse
-import urllib.error
 import json
-import configparser
 import base64
 
-import pymongo
-import flask
-import jsonrpc
-import dateutil.parser
-
-from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib import config
+from aspireblock.lib import util
 from aspireblock.lib.modules import BETTING_PRIORITY_PARSE_BROADCAST
-from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib.processor import MessageProcessor
+from aspireblock.lib.processor import StartUpProcessor
+from aspireblock.lib.processor import CaughtUpProcessor
+from aspireblock.lib.processor import RollbackProcessor
+from aspireblock.lib.processor import API
+from aspireblock.lib.processor import start_task
 
 FEED_MAX_RETRY = 3
 
@@ -83,7 +76,7 @@ def get_bets(bet_type, feed_address, deadline, target_value=None, leverage=5040)
     sql = 'SELECT * FROM bets WHERE counterwager_remaining>0 AND '
     sql += 'bet_type=? AND feed_address=? AND leverage=? AND deadline=? '
     bindings += [bet_type, feed_address, leverage, deadline]
-    if target_value != None:
+    if target_value:
         sql += 'AND target_value=? '
         bindings.append(target_value)
     sql += 'ORDER BY ((counterwager_quantity+0.0)/(wager_quantity+0.0)) ASC LIMIT ?'
@@ -288,7 +281,7 @@ def task_compile_extended_feed_info():
         logger.info("Enhanced feed info fetching complete. %s unique URLs fetched. Processing..." % len(urls_data))
         feeds = config.mongo_db.feeds.find({'info_status': 'needfetch'})
         for feed in feeds:
-            #logger.debug("Looking at feed %s: %s" % (feed, feed['info_url']))
+            # logger.debug("Looking at feed %s: %s" % (feed, feed['info_url']))
             if feed['info_url']:
                 info_url = ('http://' + feed['info_url']) \
                     if not feed['info_url'].startswith('http://') and not feed['info_url'].startswith('https://') else feed['info_url']

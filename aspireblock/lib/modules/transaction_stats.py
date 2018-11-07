@@ -4,21 +4,20 @@ Implements transaction stats support as a aspireblock plugin
 
 Python 2.x, as aspireblock is still python 2.x
 """
-import os
-import sys
+from bson.son import SON
 import time
 import datetime
 import logging
-import json
-import configparser
 import calendar
-
 import pymongo
-from bson.son import SON
-import dateutil.parser
 
-from aspireblock.lib import config, util, blockfeed, blockchain
-from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
+from aspireblock.lib import config
+from aspireblock.lib.processor import MessageProcessor
+from aspireblock.lib.processor import StartUpProcessor
+from aspireblock.lib.processor import CaughtUpProcessor
+from aspireblock.lib.processor import RollbackProcessor
+from aspireblock.lib.processor import API
+from aspireblock.lib.processor import CORE_FIRST_PRIORITY
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +53,13 @@ def get_transaction_stats(start_ts=None, end_ts=None):
             }
         }},
         {"$project": {
-            "year":  {"$year": "$block_time"},
+            "year": {"$year": "$block_time"},
             "month": {"$month": "$block_time"},
-            "day":   {"$dayOfMonth": "$block_time"},
+            "day": {"$dayOfMonth": "$block_time"},
             "category": 1,
         }},
         {"$group": {
-            "_id":   {"year": "$year", "month": "$month", "day": "$day", "category": "$category"},
+            "_id": {"year": "$year", "month": "$month", "day": "$day", "category": "$category"},
             "count": {"$sum": 1},
         }}
         #{"$sort": SON([("_id.year", pymongo.ASCENDING), ("_id.month", pymongo.ASCENDING), ("_id.day", pymongo.ASCENDING), ("_id.hour", pymongo.ASCENDING), ("_id.category", pymongo.ASCENDING)])},

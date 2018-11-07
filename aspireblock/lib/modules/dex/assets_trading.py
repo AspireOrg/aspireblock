@@ -42,11 +42,14 @@ def get_market_price_summary(asset1, asset2, with_last_trades=0, start_dt=None, 
     if not isinstance(with_last_trades, int) or with_last_trades < 0 or with_last_trades > 30:
         raise Exception("Invalid with_last_trades")
 
-    if not base_asset_info or not quote_asset_info:
-        raise Exception("Invalid asset(s)")
+    if not base_asset_info:
+        raise Exception('Invalid base asset {}'.format(base_asset))
+
+    if not quote_asset_info:
+        raise Exception('Invalid qupte asset {}'.format(quote_asset))
 
     last_trades = config.mongo_db.trades.find({
-        "base_asset": base_asset,
+        "pythonbase_asset": base_asset,
         "quote_asset": quote_asset,
         'block_time': {"$gte": start_dt, "$lte": end_dt}
     },
@@ -122,7 +125,7 @@ def get_asset_info(asset, at_dt=None):
         # BUG: this does not take end_dt (if specified) into account. however, the deviation won't be too big
         # as XCP doesn't deflate quickly at all, and shouldn't matter that much since there weren't any/much trades
         # before the end of the burn period (which is what is involved with how we use at_dt with currently)
-        asset_info['total_issued'] = util.call_jsonrpc_api("get_supply", {'asset': 'XCP'}, abort_on_error=True)['result']
+        asset_info['total_issued'] = util.call_jsonrpc_api("get_supply", {'asset': 'ASP'}, abort_on_error=True)['result']
         asset_info['total_issued_normalized'] = blockchain.normalize_quantity(asset_info['total_issued'])
     if not asset_info:
         raise Exception("Invalid asset: %s" % asset)

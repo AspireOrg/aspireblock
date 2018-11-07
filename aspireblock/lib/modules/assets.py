@@ -4,25 +4,24 @@ Implements aspirewallet asset-related support as a aspireblock plugin
 Python 2.x, as aspireblock is still python 2.x
 """
 import os
-import sys
 import time
 import datetime
 import logging
 import decimal
-import urllib.request
-import urllib.parse
-import urllib.error
-import json
-import base64
 import pymongo
-import configparser
 import calendar
 
-import dateutil.parser
-
-from aspireblock.lib import config, util, blockfeed, blockchain
-from aspireblock.lib.modules import ASSETS_PRIORITY_PARSE_ISSUANCE, ASSETS_PRIORITY_BALANCE_CHANGE
-from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config
+from aspireblock.lib import util
+from aspireblock.lib import blockchain
+from aspireblock.lib.modules import ASSETS_PRIORITY_PARSE_ISSUANCE
+from aspireblock.lib.modules import ASSETS_PRIORITY_BALANCE_CHANGE
+from aspireblock.lib.processor import MessageProcessor
+from aspireblock.lib.processor import StartUpProcessor
+from aspireblock.lib.processor import CaughtUpProcessor
+from aspireblock.lib.processor import RollbackProcessor
+from aspireblock.lib.processor import API
+from aspireblock.lib.processor import start_task
 
 ASSET_MAX_RETRY = 3
 
@@ -263,7 +262,7 @@ def get_assets_info(assetsList):
         # BTC and XCP.
         if asset in [config.BTC, config.XCP]:
             if asset == config.BTC:
-                supply = blockchain.get_gasp_supply(self.proxy, normalize=False)
+                supply = blockchain.get_gasp_supply(normalize=False)
             else:
                 supply = util.call_jsonrpc_api("get_supply", {'asset': config.XCP}, abort_on_error=True)['result']
 
@@ -335,7 +334,7 @@ def get_asset_pair_market_info(asset1=None, asset2=None, limit=50):
         pair_info = config.mongo_db.asset_pair_market_info.find({'base_asset': base_asset, 'quote_asset': quote_asset}, {'_id': 0})
     else:
         pair_info = config.mongo_db.asset_pair_market_info.find({}, {'_id': 0}).sort('completed_trades_count', pymongo.DESCENDING).limit(limit)
-        #^ sort by this for now, may want to sort by a market_cap value in the future
+        # ^ sort by this for now, may want to sort by a market_cap value in the future
     return list(pair_info) or []
 
 
@@ -387,6 +386,7 @@ def get_asset_history(asset, reverse=False):
     prev = None
     for i in range(len(raw)):  # oldest to newest
         if i == 0:
+            print(raw[i])
             assert raw[i]['_change_type'] == 'created'
             history.append({
                 'type': 'created',
@@ -509,7 +509,7 @@ def parse_issuance(msg, msg_data):
                     'info_data': {},
                     'errors': []
                 }}, upsert=True)
-            #^ valid info_status settings: needfetch, valid, invalid, error
+            # ^ valid info_status settings: needfetch, valid, invalid, error
             # additional fields will be added later in events, once the asset info is pulled
         else:
             config.mongo_db.asset_extended_info.remove({'asset': asset})
@@ -520,7 +520,7 @@ def parse_issuance(msg, msg_data):
 
     tracked_asset = config.mongo_db.tracked_assets.find_one(
         {'asset': msg_data['asset']}, {'_id': 0, '_history': 0})
-    #^ pulls the tracked asset without the _id and history fields. This may be None
+    # ^ pulls the tracked asset without the _id and history fields. This may be None
 
     if msg_data['locked']:  # lock asset
         assert tracked_asset is not None
@@ -564,11 +564,11 @@ def parse_issuance(msg, msg_data):
                 '_change_type': 'created',
                 '_at_block': cur_block_index,  # the block ID this asset is current for
                 '_at_block_time': cur_block['block_time_obj'],
-                #^ NOTE: (if there are multiple asset tracked changes updates in a single block for the same
+                # ^ NOTE: (if there are multiple asset tracked changes updates in a single block for the same
                 # asset, the last one with _at_block == that block id in the history array is the
                 # final version for that asset at that block
                 'asset': msg_data['asset'],
-                'asset_longname': msg_data.get('asset_longname', None), # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
+                'asset_longname': msg_data.get('asset_longname', None),  # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
                 'owner': msg_data['issuer'],
                 'description': msg_data['description'],
                 'divisible': msg_data['divisible'],
@@ -700,18 +700,22 @@ def process_rollback(max_block_index):
         config.mongo_db.tracked_assets.drop()
         config.mongo_db.asset_extended_info.drop()
         # create XCP and BTC assets in tracked_assets
-        for asset in [config.XCP, config.BTC]:
-            base_asset = {
-                'asset': asset,
-                'asset_longname': None,
+        for asset in [(config.XCP, config.XCP_NAME), (config.BTC, config.BTC_NAME)]:
+            tracked_asset = {
+                '_change_type': 'created',
+                '_at_block': config.BLOCK_FIRST,
+                '_at_block_time': datetime.datetime.utcfromtimestamp(1532325354),
+                'asset': asset[0],
+                'asset_longname': asset[1],
                 'owner': None,
-                'divisible': True,
+                'description': asset[1],
+                'divisible': 8,
                 'locked': False,
-                'total_issued': None,
-                '_at_block': config.BLOCK_FIRST,  # the block ID this asset is current for
+                'total_issued': int(1000000000 * 10**8),
+                'total_issued_normalized': blockchain.normalize_quantity(int(1000000000 * 10**8), 8),
                 '_history': []  # to allow for block rollbacks
             }
-            config.mongo_db.tracked_assets.insert(base_asset)
+            config.mongo_db.tracked_assets.insert(tracked_asset)
     else:  # rollback
         config.mongo_db.balance_changes.remove({"block_index": {"$gt": max_block_index}})
 
