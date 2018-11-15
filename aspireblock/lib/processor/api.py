@@ -173,9 +173,9 @@ def serve_api():
                  'end_block': end_block,
                  }, abort_on_error=True)['result']
 
-            address_dict['burns'] = util.call_jsonrpc_api(
-                "get_burns",
-                {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
+            address_dict['proofofwork'] = util.call_jsonrpc_api(
+                "get_proofofwork",
+                {'filters': [{'field': 'address', 'op': '==', 'value': address}, ],
                  'order_by': 'block_index',
                  'order_dir': 'asc',
                  'start_block': start_block,

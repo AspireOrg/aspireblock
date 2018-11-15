@@ -67,11 +67,11 @@ def decorate_message_for_feed(msg, msg_data=None):
 
 
 def get_address_cols_for_entity(entity):
-    if entity in ['debits', 'credits']:
+    if entity in ['debits', 'credits', 'proofofwork']:
         return ['address', ]
     elif entity in ['issuances', ]:
         return ['issuer', ]
-    elif entity in ['sends', 'dividends', 'bets', 'cancels', 'orders', 'burns', 'broadcasts', 'btcpays']:
+    elif entity in ['sends', 'dividends', 'bets', 'cancels', 'orders', 'broadcasts', 'btcpays']:
         return ['source', ]
     # elif entity in ['order_matches', 'bet_matches']:
     elif entity in ['order_matches', 'order_expirations', 'order_match_expirations',

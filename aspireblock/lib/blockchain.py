@@ -186,6 +186,7 @@ def get_unspent_txouts(source, return_confirmed=False):
     @return: A list of dicts, with each entry in the dict having the following keys:
     """
     txouts = util.call_jsonrpc_api('get_unspent_txouts', {'address': source, 'unconfirmed': True}, abort_on_error=True)['result']
+    print('txouts', txouts)
     if return_confirmed:
         return txouts, [output for output in txouts if output['confirmations'] > 0]
     else:
