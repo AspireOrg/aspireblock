@@ -9,19 +9,23 @@ With its set of core-plugins, `aspireblock` provides a more high-level data proc
 
 (Linux only.) First, install `mongodb` and `redis`, and have an instance of `aspiregasd` and [`aspire-server`](https://github.com/AspireOrg/aspire-lib) running.
 
-Then, download and install `aspireblock`:
+Then, download and install `aspireblock`: (following an install of aspire-lib)
 
 ```
-$ git clone https://github.com/AspireOrg/aspireblock.git
-$ cd aspireblock
-$ sudo pip3 install -r requirements.txt
-$ sudo python3 setup.py install
+sudo apt install -y libxml2-dev libxslt-dev libjpeg-dev
+sudo su aspire
+cd ~
+source virt/bin/activate
+git clone https://github.com/AspireOrg/aspireblock.git
+cd aspireblock
+pip install -r requirements.txt
+python setup.py install
 ```
 
 Then, launch the daemon via the following command, with the passwords set as appropriate:
 
 ```
-$ aspireblock --backend-password=rpc --aspire-password=rpc server
+aspireblock --backend-password=rpc --aspire-password=rpc server
 ```
 
 Further command line options are available via:

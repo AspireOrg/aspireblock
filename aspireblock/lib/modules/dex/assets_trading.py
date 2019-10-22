@@ -550,7 +550,7 @@ def compile_asset_market_info():
     # grab the last block # we processed assets data off of
     last_block_assets_compiled = config.mongo_db.app_config.find_one()['last_block_assets_compiled']
     last_block_time_assets_compiled = database.get_block_time(last_block_assets_compiled)
-    #logger.debug("Comping info for assets traded since block %i" % last_block_assets_compiled)
+    # logger.debug("Comping info for assets traded since block %i" % last_block_assets_compiled)
     current_block_index = config.state['my_latest_block']['block_index']  # store now as it may change as we are compiling asset data :)
     current_block_time = database.get_block_time(current_block_index)
 
@@ -567,8 +567,8 @@ def compile_asset_market_info():
     start_dt_1d = datetime.datetime.utcnow() - datetime.timedelta(days=1)
 
     assets = list(set(
-        list(config.mongo_db.trades.find({'block_time': {'$gte': start_dt_1d}}).distinct('quote_asset'))
-        + list(config.mongo_db.trades.find({'block_time': {'$gte': start_dt_1d}}).distinct('base_asset'))
+        list(config.mongo_db.trades.find({'block_time': {'$gte': start_dt_1d}}).distinct('quote_asset')) +
+        list(config.mongo_db.trades.find({'block_time': {'$gte': start_dt_1d}}).distinct('base_asset'))
     ))
     for asset in assets:
         market_info_24h = compile_24h_market_info(asset)

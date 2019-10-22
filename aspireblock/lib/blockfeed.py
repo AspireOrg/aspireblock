@@ -106,7 +106,9 @@ def process_cp_blockfeed():
 
         # out of order messages should not happen (anymore), but just to be sure
         if msg['message_index'] != config.state['last_message_index'] + 1 and config.state['last_message_index'] != -1:
-            raise Exception("Message index mismatch. Next message's message_index: %s, last_message_index: %s" % (
+            # raise Exception("Message index mismatch. Next message's message_index: %s, last_message_index: %s" % (
+            #     msg['message_index'], config.state['last_message_index']))
+            logger.error("Message index mismatch. Next message's message_index: %s, last_message_index: %s" % (
                 msg['message_index'], config.state['last_message_index']))
 
         for function in MessageProcessor.active_functions():
@@ -122,17 +124,14 @@ def process_cp_blockfeed():
                     'ABORT_BLOCK_PROCESSING'):  # abort all further block processing, including that of all messages in the block
                 break
             elif result not in (True, False, None):
-                raise Exception(
-                    "Message processor returned unknown code -- processor: '%s', result: '%s'" %
-                    (function, result))
+                raise Exception("Message processor returned unknown code -- processor: '%s', result: '%s'" % (function, result))
 
         config.state['last_message_index'] = msg['message_index']
         return 'ABORT_BLOCK_PROCESSING' if result == 'ABORT_BLOCK_PROCESSING' else None
 
     def parse_block(block_data):
         config.state['cur_block'] = block_data
-        config.state['cur_block']['block_time_obj'] \
-            = datetime.datetime.utcfromtimestamp(config.state['cur_block']['block_time'])
+        config.state['cur_block']['block_time_obj'] = datetime.datetime.utcfromtimestamp(config.state['cur_block']['block_time'])
         config.state['cur_block']['block_time_str'] = config.state['cur_block']['block_time_obj'].isoformat()
 
         for msg in config.state['cur_block']['_messages']:
