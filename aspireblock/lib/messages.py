@@ -18,8 +18,6 @@ def decorate_message(message, for_txn_history=False):
         block_index = message['block_index'] if 'block_index' in message else message['tx1_block_index']
         message['_block_time'] = database.get_block_time(block_index)
         message['_tx_index'] = message['tx_index'] if 'tx_index' in message else message.get('tx1_index', None)
-        if message['_category'] in ['bet_expirations', 'order_expirations', 'bet_match_expirations', 'order_match_expirations']:
-            message['_tx_index'] = 0  # add tx_index to all entries (so we can sort on it secondarily in history view), since these lack it
 
     # include asset extended information (longname and divisible)
     for attr in ('asset', 'get_asset', 'give_asset', 'forward_asset', 'backward_asset', 'dividend_asset'):
@@ -37,12 +35,6 @@ def decorate_message(message, for_txn_history=False):
         message['_quantity_normalized'] = abs(bal_change['quantity_normalized']) if bal_change else None
         message['_balance'] = bal_change['new_balance'] if bal_change else None
         message['_balance_normalized'] = bal_change['new_balance_normalized'] if bal_change else None
-
-    if message['_category'] in ['orders', 'order_matches', ]:
-        message['_btc_below_dust_limit'] = (
-            ('forward_asset' in message and message['forward_asset'] == config.BTC and message['forward_quantity'] <= config.ORDER_BTC_DUST_LIMIT_CUTOFF) or
-            ('backward_asset' in message and message['backward_asset'] == config.BTC and message['backward_quantity'] <= config.ORDER_BTC_DUST_LIMIT_CUTOFF)
-        )
 
     if message['_category'] in ['issuances', ]:
         message['_quantity_normalized'] = blockchain.normalize_quantity(message['quantity'], message['divisible'])
@@ -71,11 +63,7 @@ def get_address_cols_for_entity(entity):
         return ['address', ]
     elif entity in ['issuances', ]:
         return ['issuer', ]
-    elif entity in ['sends', 'dividends', 'bets', 'cancels', 'orders', 'broadcasts', 'btcpays']:
+    elif entity in ['sends', 'dividends', 'broadcasts']:
         return ['source', ]
-    # elif entity in ['order_matches', 'bet_matches']:
-    elif entity in ['order_matches', 'order_expirations', 'order_match_expirations',
-                    'bet_matches', 'bet_expirations', 'bet_match_expirations']:
-        return ['tx0_address', 'tx1_address']
     else:
         raise Exception("Unknown entity type: %s" % entity)
