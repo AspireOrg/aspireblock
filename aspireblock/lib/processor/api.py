@@ -175,7 +175,8 @@ def serve_api():
 
             address_dict['proofofwork'] = util.call_jsonrpc_api(
                 "get_proofofwork",
-                {'filters': [{'field': 'address', 'op': '==', 'value': address}, ],
+                {'filters': [{'field': 'address', 'op': '==', 'value': address},
+                             {'field': 'mined', 'op': '>', 'value': 0}],
                  'order_by': 'block_index',
                  'order_dir': 'asc',
                  'start_block': start_block,
