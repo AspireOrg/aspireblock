@@ -106,19 +106,19 @@ def generate_config_file(filename, config_args, known_config={}, overwrite=False
     os.chmod(filename, 0o660)
 
 
-def extract_aspiregas_config():
+def extract_gasp_config():
     bitcoincore_config = {}
 
-    # Figure out the path to the aspiregas.conf file
+    # Figure out the path to the gasp.conf file
     if platform.system() == 'Darwin':
         btc_conf_file = os.path.expanduser('~/Library/Application Support/AspireGas/')
     elif platform.system() == 'Windows':
         btc_conf_file = os.path.join(os.environ['APPDATA'], 'AspireGas')
     else:
-        btc_conf_file = os.path.expanduser('~/.aspiregas')
-    btc_conf_file = os.path.join(btc_conf_file, 'aspiregas.conf')
+        btc_conf_file = os.path.expanduser('~/.gasp')
+    btc_conf_file = os.path.join(btc_conf_file, 'gasp.conf')
 
-    # Extract contents of aspiregas.conf to build service_url
+    # Extract contents of gasp.conf to build service_url
     if os.path.exists(btc_conf_file):
         conf = {}
         with open(btc_conf_file, 'r') as fd:
@@ -195,8 +195,8 @@ def generate_config_files():
         # extract known configuration
         server_known_config = {}
 
-        aspiregas_config = extract_aspiregas_config()
-        server_known_config.update(aspiregas_config)
+        gasp_config = extract_gasp_config()
+        server_known_config.update(gasp_config)
         aspire_server_config = extract_aspire_server_config()
         server_known_config.update(aspire_server_config)
 

@@ -53,11 +53,6 @@ def serve_api():
         return config.state['cp_backend_block_index']
 
     @API.add_method
-    def get_insight_block_info(block_hash):
-        info = blockchain.getBlockInfo(block_hash)  # ('/api/block/' + block_hash + '/', abort_on_error=True)
-        return info
-
-    @API.add_method
     def get_chain_address_info(addresses, with_uxtos=True, with_last_txn_hashes=4):
         if not isinstance(addresses, list):
             raise Exception("addresses must be a list of addresses, even if it just contains one address")
@@ -84,7 +79,7 @@ def serve_api():
     def get_optimal_fee_per_kb():
         fees = cache.get_value("FEE_PER_KB")
         if not fees:
-            # query aspiregasd
+            # query gaspd
             fees = {}
             fees['optimal'] = util.call_jsonrpc_api("fee_per_kb", {'nblocks': 3}, abort_on_error=True, use_cache=False)['result']
             fees['low_priority'] = util.call_jsonrpc_api("fee_per_kb", {'nblocks': 8}, abort_on_error=True, use_cache=False)['result']

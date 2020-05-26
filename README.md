@@ -7,7 +7,7 @@ With its set of core-plugins, `aspireblock` provides a more high-level data proc
 
 # Manual installation
 
-(Linux only.) First, install `mongodb` and `redis`, and have an instance of `aspiregasd` and [`aspire-server`](https://github.com/AspireOrg/aspire-lib) running.
+(Linux only.) First, install `mongodb` and `redis`, and have an instance of `gaspd` and [`aspire-server`](https://github.com/AspireOrg/aspire-lib) running.
 
 Then, download and install `aspireblock`: (following an install of aspire-lib)
 

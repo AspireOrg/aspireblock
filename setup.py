@@ -9,7 +9,7 @@ from aspireblock.lib import config
 
 
 class generate_configuration_files(Command):
-    description = "Generate configfiles from old aspire-server and/or aspiregasd config files"
+    description = "Generate configfiles from old aspire-server and/or gaspd config files"
     user_options = []
 
     def initialize_options(self):
@@ -75,7 +75,7 @@ setup_options = {
     'license': 'MIT',
     'description': 'aspireblock server',
     'long_description': 'Implements support for extended functionality for aspire-lib',
-    'keywords': 'aspire, aspiregas, aspireblock',
+    'keywords': 'aspire, gasp, aspireblock',
     'classifiers': [
         "Programming Language :: Python",
     ],

@@ -89,7 +89,7 @@ def init_base(args):
     ##############
     # THINGS WE CONNECT TO
 
-    # backend (e.g. aspiregasd)
+    # backend (e.g. gaspd)
     global BACKEND_CONNECT
     if args.backend_connect:
         BACKEND_CONNECT = args.backend_connect

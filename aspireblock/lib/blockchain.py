@@ -44,7 +44,7 @@ def pubkey_to_address(pubkey_hex):
     return encoding.public_pair_to_bitcoin_address(public_pair, compressed=compressed, address_prefix=address_prefix)
 
 
-def aspiregasd_rpc(command, params):
+def gaspd_rpc(command, params):
     return util.call_jsonrpc_api(
         command,
         params=params,
@@ -193,4 +193,4 @@ def get_unspent_txouts(source, return_confirmed=False):
 
 
 def broadcast_tx(signed_tx_hex):
-    return aspiregasd_rpc('sendrawtransaction', [signed_tx_hex])
+    return gaspd_rpc('sendrawtransaction', [signed_tx_hex])

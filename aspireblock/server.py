@@ -46,7 +46,7 @@ CONFIG_ARGS = [
     [('--pid-file',), {'help': 'the location of the pid file'}],
 
     # THINGS WE CONNECT TO
-    [('--backend-connect',), {'help': 'the hostname or IP of the backend aspiregasd JSON-RPC server'}],
+    [('--backend-connect',), {'help': 'the hostname or IP of the backend gaspd JSON-RPC server'}],
     [('--backend-port',), {'type': int, 'help': 'the backend JSON-RPC port to connect to'}],
     [('--backend-user',), {'help': 'the username used to communicate with backend over JSON-RPC'}],
     [('--backend-password',), {'help': 'the password used to communicate with backend over JSON-RPC'}],

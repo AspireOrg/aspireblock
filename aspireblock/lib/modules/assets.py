@@ -205,7 +205,7 @@ def get_assets_info(assetsList):
         # BTC and XCP.
         if asset in [config.BTC, config.XCP]:
             if asset == config.BTC:
-                supply = blockchain.get_gasp_supply(normalize=False)
+                supply = blockchain.get_btc_supply(normalize=False)
                 asset_longname = config.BTC_NAME
             else:
                 supply = util.call_jsonrpc_api("get_supply", {'asset': config.XCP}, abort_on_error=True)['result']

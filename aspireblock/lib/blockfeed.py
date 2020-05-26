@@ -41,7 +41,7 @@ def process_cp_blockfeed():
     config.state['last_message_index'] = -1  # initialize (last processed message index)
     config.state['cp_latest_block_index'] = 0  # last block that was successfully processed by aspire
     config.state['cp_backend_block_index'] = 0  # the latest block height as reported by the cpd blockchain backend
-    config.state['cp_caught_up'] = False  # whether aspire-server is caught up to the backend (e.g. aspiregasd)
+    config.state['cp_caught_up'] = False  # whether aspire-server is caught up to the backend (e.g. gaspd)
     config.state['caught_up_started_events'] = False
     # ^ set after we are caught up and start up the recurring events that depend on us being caught up with the blockchain
 
