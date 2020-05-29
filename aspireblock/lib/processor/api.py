@@ -77,14 +77,15 @@ def serve_api():
 
     @API.add_method
     def get_optimal_fee_per_kb():
-        fees = cache.get_value("FEE_PER_KB")
-        if not fees:
-            # query gaspd
-            fees = {}
-            fees['optimal'] = util.call_jsonrpc_api("fee_per_kb", {'nblocks': 3}, abort_on_error=True, use_cache=False)['result']
-            fees['low_priority'] = util.call_jsonrpc_api("fee_per_kb", {'nblocks': 8}, abort_on_error=True, use_cache=False)['result']
-            cache.set_value("FEE_PER_KB", fees, cache_period=60 * 5)  # cache for 5 minutes
-        return fees
+        return 1000
+        # fees = cache.get_value("FEE_PER_KB")
+        # if not fees:
+        #     # query gaspd
+        #     fees = {}
+        #     fees['optimal'] = util.call_jsonrpc_api("fee_per_kb", {'nblocks': 3}, abort_on_error=True, use_cache=False)['result']
+        #     fees['low_priority'] = util.call_jsonrpc_api("fee_per_kb", {'nblocks': 8}, abort_on_error=True, use_cache=False)['result']
+        #     cache.set_value("FEE_PER_KB", fees, cache_period=60 * 5)  # cache for 5 minutes
+        # return fees
 
     @API.add_method
     def get_chain_txns_status(txn_hashes):
