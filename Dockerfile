@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-MAINTAINER Counterparty Developers <dev@counterparty.io>
+MAINTAINER Counterparty Developers <dev@aspire.io>
 
 # PyEnv
 ENV PYENV_ROOT /root/.pyenv
@@ -52,7 +52,7 @@ ENV LC_ALL en_US.UTF-8
 # Set home dir env variable
 ENV HOME /root
 
-# Install extra counterblock deps
+# Install extra aspireblock deps
 RUN apt-get update -q \
             && apt-get -y upgrade \
             && apt-get install -y --no-install-recommends \
@@ -67,21 +67,21 @@ RUN apt-get update -q \
             cython
 
 # Install
-COPY requirements.txt /counterblock/
-COPY setup.py /counterblock/
-COPY ./counterblock/lib/config.py /counterblock/counterblock/lib/
-WORKDIR /counterblock
+COPY requirements.txt /aspireblock/
+COPY setup.py /aspireblock/
+COPY ./aspireblock/lib/config.py /aspireblock/aspireblock/lib/
+WORKDIR /aspireblock
 RUN pip3 install --upgrade pip
 RUN pip3 install --upgrade -vv setuptools
 RUN pip3 install -r requirements.txt
-COPY . /counterblock
+COPY . /aspireblock
 RUN python3 setup.py develop
 
-COPY docker/server.conf /root/.config/counterblock/server.conf
-COPY docker/modules.conf /root/.config/counterblock/modules.conf
-COPY docker/modules.conf /root/.config/counterblock/modules.testnet.conf
-COPY docker/modules.conf /root/.config/counterblock/modules.regtest.conf
-COPY docker/counterwallet.conf /root/.config/counterblock/counterwallet.conf
+COPY docker/server.conf /root/.config/aspireblock/server.conf
+COPY docker/modules.conf /root/.config/aspireblock/modules.conf
+COPY docker/modules.conf /root/.config/aspireblock/modules.testnet.conf
+COPY docker/modules.conf /root/.config/aspireblock/modules.regtest.conf
+COPY docker/aspirewallet.conf /root/.config/aspireblock/aspirewallet.conf
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod a+x /usr/local/bin/start.sh
 

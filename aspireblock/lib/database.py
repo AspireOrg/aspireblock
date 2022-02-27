@@ -2,8 +2,8 @@ import os
 import logging
 import pymongo
 
-from counterblock.lib import config, cache, util
-from counterblock.lib.processor import RollbackProcessor
+from aspireblock.lib import config, cache, util
+from aspireblock.lib.processor import RollbackProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -63,18 +63,16 @@ def reset_db_state():
 
     # create/update default app_config object
     config.mongo_db.app_config.update({}, {
-        'db_version': config.DB_VERSION,  # counterblockd database version
+        'db_version': config.DB_VERSION,  # aspireblockd database version
         'running_testnet': config.TESTNET,
-        'running_regtest': config.REGTEST,
-        'counterpartyd_db_version_major': None,
-        'counterpartyd_db_version_minor': None,
-        'counterpartyd_running_testnet': None,
-        'counterpartyd_running_regtest': None,
+        'aspired_db_version_major': None,
+        'aspired_db_version_minor': None,
+        'aspired_running_testnet': None,
         'last_block_assets_compiled': config.BLOCK_FIRST,  # for asset data compilation in tasks.py (resets on reparse as well)
     }, upsert=True)
     app_config = config.mongo_db.app_config.find()[0]
 
-    # reinitialize some internal counters
+    # reinitialize some internal aspires
     config.state['my_latest_block'] = {'block_index': 0}
     config.state['last_message_index'] = -1
 
@@ -100,7 +98,7 @@ def rollback(max_block_index):
        and we should get rid of them
 
     NOTE: after calling this function, you should always trigger a "continue" statement to reiterate the processing loop
-    (which will get a new cp_latest_block from counterpartyd and resume as appropriate)
+    (which will get a new cp_latest_block from aspired and resume as appropriate)
     """
     assert isinstance(max_block_index, int) and max_block_index >= config.BLOCK_FIRST
     if not config.mongo_db.processed_blocks.find_one({"block_index": max_block_index}):

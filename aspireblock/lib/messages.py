@@ -3,7 +3,7 @@ import copy
 import logging
 import pymongo
 
-from counterblock.lib import config, blockchain, database
+from aspireblock.lib import config, blockchain, database
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +50,8 @@ def decorate_message(message, for_txn_history=False):
 
 
 def decorate_message_for_feed(msg, msg_data=None):
-    """This function takes a message from counterpartyd's message feed and mutates it a bit to be suitable to be
-    sent through the counterblockd message feed to an end-client"""
+    """This function takes a message from aspired's message feed and mutates it a bit to be suitable to be
+    sent through the aspireblockd message feed to an end-client"""
     if not msg_data:
         msg_data = json.loads(msg['bindings'])
 
@@ -67,13 +67,12 @@ def decorate_message_for_feed(msg, msg_data=None):
 
 
 def get_address_cols_for_entity(entity):
-    if entity in ['debits', 'credits']:
+    if entity in ['debits', 'credits', 'proofofwork']:
         return ['address', ]
     elif entity in ['issuances', ]:
         return ['issuer', ]
     elif entity in ['sends', 'dividends', 'bets', 'cancels', 'orders', 'burns', 'broadcasts', 'btcpays']:
         return ['source', ]
-    # elif entity in ['order_matches', 'bet_matches']:
     elif entity in ['order_matches', 'order_expirations', 'order_match_expirations',
                     'bet_matches', 'bet_expirations', 'bet_match_expirations']:
         return ['tx0_address', 'tx1_address']

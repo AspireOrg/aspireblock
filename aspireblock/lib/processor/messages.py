@@ -4,8 +4,8 @@ import sys
 import gevent
 import decimal
 
-from counterblock.lib import util, config, blockchain, blockfeed, database, messages
-from counterblock.lib.processor import MessageProcessor, CORE_FIRST_PRIORITY, CORE_LAST_PRIORITY, api
+from aspireblock.lib import util, config, blockchain, blockfeed, database, messages
+from aspireblock.lib.processor import MessageProcessor, CORE_FIRST_PRIORITY, CORE_LAST_PRIORITY, api
 
 D = decimal.Decimal
 logger = logging.getLogger(__name__)

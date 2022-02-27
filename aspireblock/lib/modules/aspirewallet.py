@@ -1,7 +1,7 @@
 """
-Implements counterwallet support as a counterblock plugin
+Implements aspirewallet support as a aspireblock plugin
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -21,16 +21,15 @@ import calendar
 
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain, messages
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
-from counterblock.lib.modules import CWALLET_PRIORITY_PARSE_FOR_SOCKETIO, CWALLET_PRIORITY_PUBLISH_MEMPOOL
+from aspireblock.lib import config, util, blockfeed, blockchain, messages
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task, CORE_FIRST_PRIORITY
+from aspireblock.lib.modules import CWALLET_PRIORITY_PARSE_FOR_SOCKETIO, CWALLET_PRIORITY_PUBLISH_MEMPOOL
 
-from counterblock.lib.processor import startup
+from aspireblock.lib.processor import startup
 
 PREFERENCES_MAX_LENGTH = 100000  # in bytes, as expressed in JSON
 ARMORY_UTXSVR_PORT_MAINNET = 6590
 ARMORY_UTXSVR_PORT_TESTNET = 6591
-ARMORY_UTXSVR_PORT_REGTEST = 6592
 
 FUZZY_MAX_WALLET_MESSAGES_STORED = 1000
 
@@ -42,13 +41,13 @@ module_config = {}
 def _read_config():
     configfile = configparser.SafeConfigParser(
         defaults=os.environ, allow_no_value=True, inline_comment_prefixes=('#', ';'))
-    config_path = os.path.join(config.config_dir, 'counterwallet%s.conf' % config.net_path_part)
+    config_path = os.path.join(config.config_dir, 'aspirewallet%s.conf' % config.net_path_part)
     logger.info("Loading config at: %s" % config_path)
     try:
         configfile.read(config_path)
         assert configfile.has_section('Default')
     except:
-        logging.warn("Could not find or parse counterwallet%s.conf config file!" % config.net_path_part)
+        logging.warn("Could not find or parse aspirewallet%s.conf config file!" % config.net_path_part)
 
     # armory-utxsvr
     if configfile.has_option('Default', 'armory-utxsvr-host'):
@@ -90,17 +89,14 @@ def is_ready():
     if we actually return data from this function, it should always be true. (may change this behaviour later)"""
 
     ip = flask.request.headers.get('X-Real-Ip', flask.request.remote_addr)
-    try:
-        country = module_config['GEOIP'].get(ip)['country']['iso_code']
-    except Exception:
-        country = "unknown"
+    # country = module_config['GEOIP'].country_code_by_addr(ip)
+    country = 'US'
     return {
         'caught_up': blockfeed.fuzzy_is_caught_up(),
         'last_message_index': config.state['last_message_index'],
         'cw_last_message_seq': config.state['cw_last_message_seq'],
         'block_height': config.state['cp_backend_block_index'],
         'testnet': config.TESTNET,
-        'regtest': config.REGTEST,
         'ip': ip,
         'country': country,
         'quote_assets': config.QUOTE_ASSETS,
@@ -112,7 +108,8 @@ def is_ready():
 def get_reflected_host_info():
     """Allows the requesting host to get some info about itself, such as its IP. Used for troubleshooting."""
     ip = flask.request.headers.get('X-Real-Ip', flask.request.remote_addr)
-    country = module_config['GEOIP'].get(ip)['country']['iso_code']
+    # country = module_config['GEOIP'].country_code_by_addr(ip)
+    country = 'US'
     return {
         'ip': ip,
         'cookie': flask.request.headers.get('Cookie', ''),
@@ -130,11 +127,10 @@ def get_wallet_stats(start_ts=None, end_ts=None):
 
     num_wallets_mainnet = config.mongo_db.preferences.find({'network': 'mainnet'}).count()
     num_wallets_testnet = config.mongo_db.preferences.find({'network': 'testnet'}).count()
-    num_wallets_regtest = config.mongo_db.preferences.find({'network': 'regtest'}).count()
     num_wallets_unknown = config.mongo_db.preferences.find({'network': None}).count()
     wallet_stats = []
 
-    for net in ['mainnet', 'testnet', 'regtest']:
+    for net in ['mainnet', 'testnet']:
         filters = {
             "when": {
                 "$gte": datetime.datetime.utcfromtimestamp(start_ts)
@@ -165,7 +161,6 @@ def get_wallet_stats(start_ts=None, end_ts=None):
     return {
         'num_wallets_mainnet': num_wallets_mainnet,
         'num_wallets_testnet': num_wallets_testnet,
-        'num_wallets_regtest': num_wallets_regtest,
         'num_wallets_unknown': num_wallets_unknown,
         'wallet_stats': wallet_stats}
 
@@ -173,9 +168,9 @@ def get_wallet_stats(start_ts=None, end_ts=None):
 @API.add_method
 def get_preferences(wallet_id, for_login=False, network=None):
     """Gets stored wallet preferences
-    @param network: only required if for_login is specified. One of: 'mainnet', 'testnet' or 'regtest'
+    @param network: only required if for_login is specified. One of: 'mainnet' or 'testnet'
     """
-    if network not in (None, 'mainnet', 'testnet', 'regtest'):
+    if network not in (None, 'mainnet', 'testnet'):
         raise Exception("Invalid network parameter setting")
     if for_login and network is None:
         raise Exception("network parameter required if for_login is set")
@@ -190,7 +185,7 @@ def get_preferences(wallet_id, for_login=False, network=None):
     if for_login:  # record user login
         ip = flask.request.headers.get('X-Real-Ip', flask.request.remote_addr)
         ua = flask.request.headers.get('User-Agent', '')
-        config.mongo_db.login_history.insert({'wallet_id': wallet_id, 'when': now, 'network': network, 'action': 'login', 'ip': ip, 'ua': ua})
+        config.mongo_db.login_history.insert({'wallet_id': wallet_id, 'when': datetime.datetime.utcnow(), 'network': network, 'action': 'login', 'ip': ip, 'ua': ua})
 
     result['last_touched'] = calendar.timegm(time.gmtime())
     config.mongo_db.preferences.save(result)
@@ -204,9 +199,9 @@ def get_preferences(wallet_id, for_login=False, network=None):
 @API.add_method
 def store_preferences(wallet_id, preferences, for_login=False, network=None, referer=None):
     """Stores freeform wallet preferences
-    @param network: only required if for_login is specified. One of: 'mainnet', 'testnet' or 'regtest'
+    @param network: only required if for_login is specified. One of: 'mainnet' or 'testnet'
     """
-    if network not in (None, 'mainnet', 'testnet', 'regtest'):
+    if network not in (None, 'mainnet', 'testnet'):
         raise Exception("Invalid network parameter setting")
     if for_login and network is None:
         raise Exception("network parameter required if for_login is set")
@@ -364,7 +359,7 @@ def task_generate_wallet_stats():
     Every 30 minutes, from the login history, update and generate wallet stats
     """
     def gen_stats_for_network(network):
-        assert network in ('mainnet', 'testnet', 'regtest')
+        assert network in ('mainnet', 'testnet')
         # get the latest date in the stats table present
         now = datetime.datetime.utcnow()
         latest_stat = config.mongo_db.wallet_stats.find({'network': network}).sort('when', pymongo.DESCENDING).limit(1)
@@ -473,7 +468,6 @@ def task_generate_wallet_stats():
 
     gen_stats_for_network('mainnet')
     gen_stats_for_network('testnet')
-    gen_stats_for_network('regtest')
     start_task(task_generate_wallet_stats, delay=30 * 60)  # call again in 30 minutes
 
 
@@ -507,11 +501,7 @@ def store_wallet_message(msg, msg_data, decorate=True):
 @MessageProcessor.subscribe(priority=CORE_FIRST_PRIORITY - 0.5)
 def handle_invalid(msg, msg_data):
     # don't process invalid messages, but do forward them along to clients
-    pre_status = msg_data.get('status', 'valid')
-    if type(pre_status) == str:
-        status = msg_data.get('status', 'valid').lower()
-    else:
-        status = str(pre_status)
+    status = msg_data.get('status', 'valid').lower()
     if status.startswith('invalid'):
         if config.state['cp_latest_block_index'] - config.state['my_latest_block']['block_index'] < config.MAX_REORG_NUM_BLOCKS:
             # forward along via message feed, except while we're catching up
@@ -592,40 +582,8 @@ def init():
     config.state['cw_last_message_seq'] = last_wallet_message['_id'] if last_wallet_message else 0
     logger.debug("cw_last_message_seq: {}".format(config.state['cw_last_message_seq']))
 
-    # init GEOIP
-    import maxminddb
-    mmdbName = 'GeoLite2-City.mmdb'
-    geoip_data_path = os.path.join(config.data_dir, mmdbName)
-
-
-    def download_geoip_data():
-        logger.info("Checking/updating {} ...".format(mmdbName))
-        download = False
-
-        if not os.path.isfile(geoip_data_path):
-            download = True
-        else:
-            one_week_ago = time.time() - 60 * 60 * 24 * 7
-            file_stat = os.stat(geoip_data_path)
-            if file_stat.st_ctime < one_week_ago:
-                download = True
-
-        if download:
-            logger.info("Downloading {}".format(mmdbName))
-            # TODO: replace with pythonic way to do this!
-            cmd = "cd '{}' && curl -L -O https://counterparty.io/bootstrap/GeoLite2-City.mmdb.gz && gzip -d GeoLite2-City.mmdb.gz".format(config.data_dir)
-            util.subprocess_cmd(cmd)
-        else:
-            logger.info("{} database up to date. Not downloading.".format(mmdbName))
-
-    download_geoip_data()
-    try:
-        module_config['GEOIP'] = maxminddb.open_database(geoip_data_path, maxminddb.MODE_AUTO)
-    except FileNotFoundError as e:
-        logger.warn("GeoLite2-City.mmdb not found, download from https://maxmind.com/ the GeoLite2-City and put in {}".format(geoip_data_path))
-
     if not module_config['SUPPORT_EMAIL']:
-        logger.warn("Support email setting not set: To enable, please specify an email for the 'support-email' setting in your counterblockd.conf")
+        logger.warn("Support email setting not set: To enable, please specify an email for the 'support-email' setting in your aspireblockd.conf")
 
 
 @RollbackProcessor.subscribe()

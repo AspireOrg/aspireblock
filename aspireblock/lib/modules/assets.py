@@ -1,7 +1,7 @@
 """
-Implements counterwallet asset-related support as a counterblock plugin
+Implements aspirewallet asset-related support as a aspireblock plugin
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -20,9 +20,9 @@ import calendar
 
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.modules import ASSETS_PRIORITY_PARSE_ISSUANCE, ASSETS_PRIORITY_BALANCE_CHANGE
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.modules import ASSETS_PRIORITY_PARSE_ISSUANCE, ASSETS_PRIORITY_BALANCE_CHANGE
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
 
 ASSET_MAX_RETRY = 3
 
@@ -134,7 +134,7 @@ def task_compile_extended_asset_info():
 @API.add_method
 def get_normalized_balances(addresses):
     """
-    This call augments counterparty's get_balances with a normalized_quantity field. It also will include any owned
+    This call augments aspire's get_balances with a normalized_quantity field. It also will include any owned
     assets for an address, even if their balance is zero.
     NOTE: Does not retrieve BTC balance. Use get_address_info for that.
     """
@@ -163,17 +163,12 @@ def get_normalized_balances(addresses):
         if not d['quantity'] and ((d['address'] + d['asset']) not in isowner):
             continue  # don't include balances with a zero asset value
         asset_info = config.mongo_db.tracked_assets.find_one({'asset': d['asset']})
-        divisible = True  # XCP and BTC
+        divisible = True  # ASP and GASP
         if asset_info and 'divisible' in asset_info:
             divisible = asset_info['divisible']
         d['normalized_quantity'] = blockchain.normalize_quantity(d['quantity'], divisible)
         d['owner'] = (d['address'] + d['asset']) in isowner
-
-        try:
-            d['asset_longname'] = asset_info['asset_longname']
-        except TypeError as e:
-            d['asset_longname'] = d['asset']
-
+        d['asset_longname'] = asset_info['asset_longname']
         mappings[d['address'] + d['asset']] = d
         data.append(d)
 
@@ -269,12 +264,14 @@ def get_assets_info(assetsList):
         if asset in [config.BTC, config.XCP]:
             if asset == config.BTC:
                 supply = blockchain.get_btc_supply(normalize=False)
+                asset_longname = config.BTC_NAME
             else:
                 supply = util.call_jsonrpc_api("get_supply", {'asset': config.XCP}, abort_on_error=True)['result']
+                asset_longname = config.XCP_NAME
 
             assets_info.append({
                 'asset': asset,
-                'asset_longname': None,
+                'asset_longname': asset_longname,
                 'owner': None,
                 'divisible': True,
                 'locked': False,
@@ -573,7 +570,7 @@ def parse_issuance(msg, msg_data):
                 # asset, the last one with _at_block == that block id in the history array is the
                 # final version for that asset at that block
                 'asset': msg_data['asset'],
-                'asset_longname': msg_data.get('asset_longname', None), # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
+                'asset_longname': msg_data.get('asset_longname', None),  # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
                 'owner': msg_data['issuer'],
                 'description': msg_data['description'],
                 'divisible': msg_data['divisible'],
@@ -705,18 +702,22 @@ def process_rollback(max_block_index):
         config.mongo_db.tracked_assets.drop()
         config.mongo_db.asset_extended_info.drop()
         # create XCP and BTC assets in tracked_assets
-        for asset in [config.XCP, config.BTC]:
-            base_asset = {
-                'asset': asset,
-                'asset_longname': None,
+        for asset in [(config.XCP, config.XCP_NAME), (config.BTC, config.BTC_NAME)]:
+            tracked_asset = {
+                '_change_type': 'created',
+                '_at_block': config.BLOCK_FIRST,
+                '_at_block_time': datetime.datetime.utcfromtimestamp(1532325354),
+                'asset': asset[0],
+                'asset_longname': asset[1],
                 'owner': None,
-                'divisible': True,
+                'description': asset[1],
+                'divisible': 8,
                 'locked': False,
-                'total_issued': None,
-                '_at_block': config.BLOCK_FIRST,  # the block ID this asset is current for
+                'total_issued': int(1000000000 * 10**8),
+                'total_issued_normalized': blockchain.normalize_quantity(int(1000000000 * 10**8), 8),
                 '_history': []  # to allow for block rollbacks
             }
-            config.mongo_db.tracked_assets.insert(base_asset)
+            config.mongo_db.tracked_assets.insert(tracked_asset)
     else:  # rollback
         config.mongo_db.balance_changes.remove({"block_index": {"$gt": max_block_index}})
 

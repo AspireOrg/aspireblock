@@ -6,7 +6,7 @@ import json
 import calendar
 import time
 
-from counterblock.lib import cache, config, util
+from aspireblock.lib import cache, config, util
 
 decimal.setcontext(decimal.Context(prec=8, rounding=decimal.ROUND_HALF_EVEN))
 D = decimal.Decimal
@@ -359,7 +359,7 @@ def get_market_trades(asset1, asset2, addresses=[], limit=50, supplies=None):
             trade = {}
             trade['match_id'] = order_match['id']
             trade['source'] = order_match['tx0_address']
-            trade['countersource'] = order_match['tx1_address']
+            trade['aspiresource'] = order_match['tx1_address']
             trade['block_index'] = order_match['block_index']
             trade['block_time'] = order_match['block_time']
             trade['status'] = order_match['status']
@@ -379,7 +379,7 @@ def get_market_trades(asset1, asset2, addresses=[], limit=50, supplies=None):
             trade = {}
             trade['match_id'] = order_match['id']
             trade['source'] = order_match['tx1_address']
-            trade['countersource'] = order_match['tx0_address']
+            trade['aspiresource'] = order_match['tx0_address']
             trade['block_index'] = order_match['block_index']
             trade['block_time'] = order_match['block_time']
             trade['status'] = order_match['status']

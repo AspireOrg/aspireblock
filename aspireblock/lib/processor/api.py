@@ -21,8 +21,8 @@ import flask
 import jsonrpc
 import pymongo
 
-from counterblock.lib import config, cache, database, util, blockchain, blockfeed, messages
-from counterblock.lib.processor import API
+from aspireblock.lib import config, cache, database, util, blockchain, blockfeed, messages
+from aspireblock.lib.processor import API
 
 API_MAX_LOG_SIZE = 10 * 1024 * 1024  # max log size of 20 MB before rotation (make configurable later)
 API_MAX_LOG_COUNT = 10
@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 def serve_api():
     # Preferneces are just JSON objects... since we don't force a specific form to the wallet on
     # the server side, this makes it easier for 3rd party wallets (i.e. not Counterwallet) to fully be able to
-    # use counterblockd to not only pull useful data, but also load and store their own preferences, containing
+    # use aspireblockd to not only pull useful data, but also load and store their own preferences, containing
     # whatever data they need
 
     app = flask.Flask(__name__)
@@ -85,20 +85,7 @@ def serve_api():
 
     @API.add_method
     def get_optimal_fee_per_kb():
-        fees = cache.get_value("FEE_PER_KB")
-        if not fees:
-            if config.BLOCKTRAIL_API_KEY:
-                # query blocktrail API
-                fees = util.get_url(
-                    "https://api.blocktrail.com/v1/BTC/fee-per-kb?api_key={}".format(config.BLOCKTRAIL_API_KEY),
-                    abort_on_error=True, is_json=True)
-            else:
-                # query bitcoind
-                fees = {}
-                fees['optimal'] = util.call_jsonrpc_api("fee_per_kb", {'conf_target': 3}, abort_on_error=True, use_cache=False)['result']
-                fees['low_priority'] = util.call_jsonrpc_api("fee_per_kb", {'conf_target': 8}, abort_on_error=True, use_cache=False)['result']
-            cache.set_value("FEE_PER_KB", fees, cache_period=60 * 5)  # cache for 5 minutes
-        return fees
+        return 1000
 
     @API.add_method
     def get_chain_txns_status(txn_hashes):
@@ -354,7 +341,7 @@ def serve_api():
             start_dt=datetime.datetime.utcfromtimestamp(start_ts),
             end_dt=datetime.datetime.utcfromtimestamp(end_ts) if now_ts != end_ts else None)
 
-        # make API call to counterparty-server to get all of the data for the specified address
+        # make API call to aspire-server to get all of the data for the specified address
         txns = []
         d = get_address_history(address, start_block=start_block_index, end_block=end_block_index)
         # mash it all together
@@ -372,7 +359,7 @@ def serve_api():
         return txns
 
     @API.add_method
-    def proxy_to_counterpartyd(method='', params=[]):
+    def proxy_to_aspired(method='', params=[]):
         if method == 'sql':
             raise Exception("Invalid method")
         result = None
@@ -418,7 +405,7 @@ def serve_api():
             tx_logger.info("***CSP SECURITY --- %s" % data_json)
             return flask.Response('', 200)
 
-        #"ping" counterpartyd to test
+        #"ping" aspired to test
         cp_s = time.time()
         cp_result_valid = True
         try:
@@ -427,7 +414,7 @@ def serve_api():
             cp_result_valid = False
         cp_e = time.time()
 
-        #"ping" counterblockd to test, as well
+        #"ping" aspireblockd to test, as well
         cb_s = time.time()
         cb_result_valid = True
         cb_result_error_code = None
@@ -457,39 +444,39 @@ def serve_api():
         cb_e = time.time()
 
         result = {
-            'counterparty-server': 'OK' if cp_result_valid else 'NOT OK',
-            'counterparty-server_ver': '%s.%s.%s' % (
+            'aspire-server': 'OK' if cp_result_valid else 'NOT OK',
+            'aspire-server_ver': '%s.%s.%s' % (
                 cp_status['version_major'], cp_status['version_minor'], cp_status['version_revision']) if cp_result_valid else '?',
-            'counterparty-server_last_block': cp_status['last_block'] if cp_result_valid else '?',
-            'counterparty-server_last_message_index': cp_status['last_message_index'] if cp_result_valid else '?',
-            'counterparty-server_caught_up': config.state['cp_caught_up'],
-            'counterparty-server_check_elapsed': cp_e - cp_s,
+            'aspire-server_last_block': cp_status['last_block'] if cp_result_valid else '?',
+            'aspire-server_last_message_index': cp_status['last_message_index'] if cp_result_valid else '?',
+            'aspire-server_caught_up': config.state['cp_caught_up'],
+            'aspire-server_check_elapsed': cp_e - cp_s,
 
-            'counterblock': 'OK' if cb_result_valid else 'NOT OK',
-            'counterblock_ver': config.VERSION,
-            'counterblock_check_elapsed': cb_e - cb_s,
-            'counterblock_error': cb_result_error_code,
-            'counterblock_last_message_index': config.state['last_message_index'],
-            'counterblock_caught_up': blockfeed.fuzzy_is_caught_up(),
-            'counterblock_cur_block': {'block_hash': config.state['cur_block'].get('block_hash', '??'),
-                                       'block_index': config.state['cur_block'].get('block_index', '??')},
-            'counterblock_last_processed_block': {'block_hash': config.state['my_latest_block'].get('block_hash', '??'),
-                                                  'block_index': config.state['my_latest_block'].get('block_index', '??')},
+            'aspireblock': 'OK' if cb_result_valid else 'NOT OK',
+            'aspireblock_ver': config.VERSION,
+            'aspireblock_check_elapsed': cb_e - cb_s,
+            'aspireblock_error': cb_result_error_code,
+            'aspireblock_last_message_index': config.state['last_message_index'],
+            'aspireblock_caught_up': blockfeed.fuzzy_is_caught_up(),
+            'aspireblock_cur_block': {'block_hash': config.state['cur_block'].get('block_hash', '??'),
+                                      'block_index': config.state['cur_block'].get('block_index', '??')},
+            'aspireblock_last_processed_block': {'block_hash': config.state['my_latest_block'].get('block_hash', '??'),
+                                                 'block_index': config.state['my_latest_block'].get('block_index', '??')},
         }
 
         response_code = 200
-        # error if we couldn't make a successful call to counterparty-server or counterblock's API (500)
+        # error if we couldn't make a successful call to aspire-server or aspireblock's API (500)
         if not cp_result_valid or not cb_result_valid:
             response_code = 500
-            result['ERROR'] = "counterparty-server_api_contact_error"
-        # error 510 if the counterparty-server last block is more than 1 block behind backend
-        elif not result['counterparty-server_caught_up']:
+            result['ERROR'] = "aspire-server_api_contact_error"
+        # error 510 if the aspire-server last block is more than 1 block behind backend
+        elif not result['aspire-server_caught_up']:
             response_code = 510
-            result['ERROR'] = "counterparty-server_not_caught_up"
-        # error 511 if the counterblock last block is more than 1 block behind counterparty-server
-        elif not result['counterblock_caught_up']:
+            result['ERROR'] = "aspire-server_not_caught_up"
+        # error 511 if the aspireblock last block is more than 1 block behind aspire-server
+        elif not result['aspireblock_caught_up']:
             response_code = 511
-            result['ERROR'] = "counterblock_not_caught_up"
+            result['ERROR'] = "aspireblock_not_caught_up"
         else:
             result['ERROR'] = None
 

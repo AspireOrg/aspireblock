@@ -4,7 +4,7 @@ import imp
 import logging
 from configobj import ConfigObj
 
-from counterblock.lib import config
+from aspireblock.lib import config
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +72,7 @@ def load_all():
 
 
 def toggle(mod, enabled=True):
+    imp.find_module(mod)
     try:
         imp.find_module(mod)
     except:

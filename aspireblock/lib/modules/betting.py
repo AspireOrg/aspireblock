@@ -1,5 +1,5 @@
 """
-Implements counterwallet enhanced asset info and betting feed support as a counterblock plugin
+Implements aspirewallet enhanced asset info and betting feed support as a aspireblock plugin
 
 Python 3.x since v1.4.0
 """
@@ -21,9 +21,9 @@ import flask
 import jsonrpc
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.modules import BETTING_PRIORITY_PARSE_BROADCAST
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.modules import BETTING_PRIORITY_PARSE_BROADCAST
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
 
 FEED_MAX_RETRY = 3
 
@@ -63,8 +63,8 @@ def get_feeds_by_source_addresses(addresses):
     return feeds_by_source
 
 
-def get_feed_counters(feed_address):
-    counters = {}
+def get_feed_aspires(feed_address):
+    aspires = {}
     sql = 'SELECT COUNT(*) AS bet_count, SUM(wager_quantity) AS wager_quantity, SUM(wager_remaining) AS wager_remaining, status FROM bets '
     sql += 'WHERE feed_address=? GROUP BY status ORDER BY status DESC'
     bindings = [feed_address]
@@ -72,21 +72,21 @@ def get_feed_counters(feed_address):
         'query': sql,
         'bindings': bindings
     }
-    counters['bets'] = util.call_jsonrpc_api('sql', params)['result']
-    return counters
+    aspires['bets'] = util.call_jsonrpc_api('sql', params)['result']
+    return aspires
 
 
 @API.add_method
 def get_bets(bet_type, feed_address, deadline, target_value=None, leverage=5040):
     limit = 50
     bindings = []
-    sql = 'SELECT * FROM bets WHERE counterwager_remaining>0 AND '
+    sql = 'SELECT * FROM bets WHERE aspirewager_remaining>0 AND '
     sql += 'bet_type=? AND feed_address=? AND leverage=? AND deadline=? '
     bindings += [bet_type, feed_address, leverage, deadline]
     if target_value != None:
         sql += 'AND target_value=? '
         bindings.append(target_value)
-    sql += 'ORDER BY ((counterwager_quantity+0.0)/(wager_quantity+0.0)) ASC LIMIT ?'
+    sql += 'ORDER BY ((aspirewager_quantity+0.0)/(wager_quantity+0.0)) ASC LIMIT ?'
     bindings.append(limit)
     params = {
         'query': sql,
@@ -133,9 +133,9 @@ def get_feed(address_or_url=''):
             feed['info_data']['next_broadcast'] = util.next_interval_date(feed['info_data']['broadcast_date'])
             feed['info_data']['next_deadline'] = util.next_interval_date(feed['info_data']['deadline'])
         result = feed
-        result['counters'] = get_feed_counters(feed['source'])
+        result['aspires'] = get_feed_aspires(feed['source'])
 
-    if 'counters' not in result:
+    if 'aspires' not in result:
         params = {
             'filters': {
                 'field': 'source',
@@ -150,7 +150,7 @@ def get_feed(address_or_url=''):
         if broadcasts:
             return {
                 'broadcasts': broadcasts,
-                'counters': get_feed_counters(address_or_url)
+                'aspires': get_feed_aspires(address_or_url)
             }
     return result
 
@@ -190,7 +190,7 @@ def parse_base64_feed(base64_feed):
     complete_feed['fee_fraction_int'] = broadcasts[0]['fee_fraction_int']
     complete_feed['source'] = broadcasts[0]['source']
     complete_feed['locked'] = broadcasts[0]['locked']
-    complete_feed['counters'] = get_feed_counters(broadcasts[0]['source'])
+    complete_feed['aspires'] = get_feed_aspires(broadcasts[0]['source'])
     complete_feed['info_data'] = sanitize_json_data(feed['feed'])
 
     feed['feed'] = complete_feed

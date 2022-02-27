@@ -27,7 +27,7 @@ import strict_rfc3339
 import rfc3987
 import aniso8601  # not needed here but to ensure that installed
 
-from counterblock.lib import config, cache
+from aspireblock.lib import config, cache
 
 JSONRPC_API_REQUEST_TIMEOUT = 100  # in seconds
 JSONRPC_CACHE_PERIOD = 3600 # 1 hour
@@ -86,7 +86,7 @@ def jsonrpc_api(method, params=None, endpoint=None, auth=None, abort_on_error=Fa
         try:
             result = call_jsonrpc_api(method, params=params, endpoint=endpoint, auth=auth, abort_on_error=abort_on_error, use_cache=use_cache)
             if 'result' not in result:
-                raise AssertionError("Could not contact counterpartyd")
+                raise AssertionError("Could not contact aspired")
             return result
         except Exception as e:
             retry += 1
@@ -97,23 +97,11 @@ def jsonrpc_api(method, params=None, endpoint=None, auth=None, abort_on_error=Fa
 
 def call_jsonrpc_api(method, params=None, endpoint=None, auth=None, abort_on_error=False, use_cache=True):
     if not endpoint:
-        endpoint = config.COUNTERPARTY_RPC
+        endpoint = config.ASPIRE_RPC
     if not auth:
-        auth = config.COUNTERPARTY_AUTH
+        auth = config.ASPIRE_AUTH
     if not params:
         params = {}
-
-    if use_cache:
-        # check for cached response for the current block and return that if it exists
-        cache_key = "{}__{}__{}__{}".format(
-            endpoint,
-            method,
-            hashlib.sha256(json.dumps(params).encode('utf-8')).hexdigest(),
-            config.state['my_latest_block']['block_index'])
-        result = cache.get_value(cache_key)
-        #logger.debug("{} -- {}, {} ====> {}".format('HIT' if result is not None else 'MISS', method, hashlib.sha256(json.dumps(params).encode('utf-8')).hexdigest(), json.dumps(params)[0:2000]))
-        if result is not None:
-            return result
 
     payload = {
         "id": 0,
@@ -149,10 +137,6 @@ def call_jsonrpc_api(method, params=None, endpoint=None, auth=None, abort_on_err
 
     if abort_on_error and 'error' in result and result['error'] is not None:
         raise Exception("Got back error from server: %s" % result['error'])
-
-    if use_cache:
-        # store the result
-        cache.set_value(cache_key, result, cache_period=JSONRPC_CACHE_PERIOD)
 
     return result
 

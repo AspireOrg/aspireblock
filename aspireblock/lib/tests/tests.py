@@ -18,8 +18,8 @@ early_exit_block = 313000
 logger = logging.getLogger(__name__)
 
 if __name__ != '__main__':
-    from counterblock.lib import config
-    from counterblock.lib.processor import processor
+    from aspireblock.lib import config
+    from aspireblock.lib.processor import processor
 
     @processor.StartUpProcessor.subscribe()
     def reparse_timer_start():
@@ -35,7 +35,7 @@ if __name__ != '__main__':
         logger.warn("%s, time elapsed %s" % (msg, time.time() - config.state['timer']))
 
     @processor.BlockProcessor.subscribe()
-    def stop_counterblockd():
+    def stop_aspireblockd():
         if (config.state['my_latest_block']['block_index'] == early_exit_block) or (early_exit_block is None and config.state['caught_up']):
             if early_exit_block:
                 logger.warn("exitting at %s..." % config.state['my_latest_block']['block_index'])
@@ -74,7 +74,7 @@ def get_dbhash_file_path():
     try:
         dbhash_file = os.path.join(config.DATA_DIR, "dbhashes.txt")
     except:
-        dbhash_file = os.path.join(appdirs.user_data_dir(appauthor='Counterparty', appname='counterblockd', roaming=True), "dbhashes.txt")
+        dbhash_file = os.path.join(appdirs.user_data_dir(appauthor='Counterparty', appname='aspireblockd', roaming=True), "dbhashes.txt")
     return dbhash_file
 
 

@@ -1,9 +1,9 @@
 """
-Implements counterwallet asset-related support as a counterblock plugin
+Implements aspirewallet asset-related support as a aspireblock plugin
 
 DEPENDENCIES: This module requires the assets module to be loaded before it.
 
-Python 2.x, as counterblock is still python 2.x
+Python 2.x, as aspireblock is still python 2.x
 """
 import os
 import sys
@@ -24,9 +24,9 @@ import pymongo
 from bson.son import SON
 import dateutil.parser
 
-from counterblock.lib import config, util, blockfeed, blockchain
-from counterblock.lib.modules import DEX_PRIORITY_PARSE_TRADEBOOK
-from counterblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
+from aspireblock.lib import config, util, blockfeed, blockchain
+from aspireblock.lib.modules import DEX_PRIORITY_PARSE_TRADEBOOK
+from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, StartUpProcessor, CaughtUpProcessor, RollbackProcessor, API, start_task
 from . import assets_trading, dex
 
 D = decimal.Decimal

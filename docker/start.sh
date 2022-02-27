@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Run "setup.py develop" if we need to
-if [ ! -d /counterblock/counterblock.egg-info ]; then
-    cd /counterblock; python3 setup.py develop; cd /
+if [ ! -d /aspireblock/aspireblock.egg-info ]; then
+    cd /aspireblock; python3 setup.py develop; cd /
 fi
 
 # Launch, utilizing the SIGTERM/SIGINT propagation pattern from
@@ -10,7 +10,7 @@ fi
 : ${PARAMS:=""}
 : ${COMMAND:="server"}
 trap 'kill -TERM $PID' TERM INT
-counterblock ${PARAMS} ${COMMAND} &
+/usr/local/bin/aspireblock ${PARAMS} ${COMMAND} &
 PID=$!
 wait $PID
 trap - TERM INT
