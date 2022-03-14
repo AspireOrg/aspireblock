@@ -168,7 +168,12 @@ def get_normalized_balances(addresses):
             divisible = asset_info['divisible']
         d['normalized_quantity'] = blockchain.normalize_quantity(d['quantity'], divisible)
         d['owner'] = (d['address'] + d['asset']) in isowner
-        d['asset_longname'] = asset_info['asset_longname']
+
+        try:
+            d['asset_longname'] = asset_info['asset_longname']
+        except TypeError as e:
+            d['asset_longname'] = d['asset']
+
         mappings[d['address'] + d['asset']] = d
         data.append(d)
 
@@ -264,14 +269,12 @@ def get_assets_info(assetsList):
         if asset in [config.BTC, config.XCP]:
             if asset == config.BTC:
                 supply = blockchain.get_btc_supply(normalize=False)
-                asset_longname = config.BTC_NAME
             else:
                 supply = util.call_jsonrpc_api("get_supply", {'asset': config.XCP}, abort_on_error=True)['result']
-                asset_longname = config.XCP_NAME
 
             assets_info.append({
                 'asset': asset,
-                'asset_longname': asset_longname,
+                'asset_longname': None,
                 'owner': None,
                 'divisible': True,
                 'locked': False,
@@ -570,7 +573,7 @@ def parse_issuance(msg, msg_data):
                 # asset, the last one with _at_block == that block id in the history array is the
                 # final version for that asset at that block
                 'asset': msg_data['asset'],
-                'asset_longname': msg_data.get('asset_longname', None),  # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
+                'asset_longname': msg_data.get('asset_longname', None), # for subassets, this is the full subasset name of the asset, e.g. PIZZA.DOMINOSBLA
                 'owner': msg_data['issuer'],
                 'description': msg_data['description'],
                 'divisible': msg_data['divisible'],

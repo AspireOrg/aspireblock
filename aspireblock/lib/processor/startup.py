@@ -1,11 +1,16 @@
-import os
-import sys
-import json
-import time
+from aspireblock.lib import blockfeed
+from aspireblock.lib import blockchain
+from aspireblock.lib import config
+from aspireblock.lib import cache
+from aspireblock.lib import database
+from aspireblock.lib import util
+from aspireblock.lib.processor import StartUpProcessor
+from aspireblock.lib.processor import CORE_FIRST_PRIORITY
+from aspireblock.lib.processor import CORE_LAST_PRIORITY
+from aspireblock.lib.processor import api
+from aspireblock.lib.processor import start_task
 import logging
 
-from aspireblock.lib import blockfeed, blockchain, config, cache, database, util
-from aspireblock.lib.processor import StartUpProcessor, CORE_FIRST_PRIORITY, CORE_LAST_PRIORITY, api, start_task
 
 logger = logging.getLogger(__name__)
 

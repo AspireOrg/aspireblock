@@ -1,3 +1,7 @@
+from PIL import Image
+from jsonschema import FormatChecker
+from jsonschema import Draft4Validator
+from jsonschema import FormatError
 import os
 import re
 import json
@@ -12,25 +16,18 @@ import io
 import subprocess
 import calendar
 import hashlib
-import socket
-
 import dateutil.parser
 import gevent
 import gevent.pool
 import gevent.ssl
 import grequests
-import pymongo
 import lxml.html
-from PIL import Image
-from jsonschema import FormatChecker, Draft4Validator, FormatError
-import strict_rfc3339
-import rfc3987
 import aniso8601  # not needed here but to ensure that installed
 
 from aspireblock.lib import config, cache
 
 JSONRPC_API_REQUEST_TIMEOUT = 100  # in seconds
-JSONRPC_CACHE_PERIOD = 3600 # 1 hour
+JSONRPC_CACHE_PERIOD = 3600  # 1 hour
 
 D = decimal.Decimal
 logger = logging.getLogger(__name__)
@@ -39,7 +36,7 @@ logger = logging.getLogger(__name__)
 def sanitize_eliteness(text):
     # strip out html data to avoid XSS-vectors
     return cgi.escape(lxml.html.document_fromstring(text).text_content())
-    #^ wrap in cgi.escape - see https://github.com/mitotic/graphterm/issues/5
+    # ^ wrap in cgi.escape - see https://github.com/mitotic/graphterm/issues/5
 
 
 def http_basic_auth_str(username, password):
@@ -103,6 +100,18 @@ def call_jsonrpc_api(method, params=None, endpoint=None, auth=None, abort_on_err
     if not params:
         params = {}
 
+    if use_cache:
+        # check for cached response for the current block and return that if it exists
+        cache_key = "{}__{}__{}__{}".format(
+            endpoint,
+            method,
+            hashlib.sha256(json.dumps(params).encode('utf-8')).hexdigest(),
+            config.state['my_latest_block']['block_index'])
+        result = cache.get_value(cache_key)
+        # logger.debug("{} -- {}, {} ====> {}".format('HIT' if result is not None else 'MISS', method, hashlib.sha256(json.dumps(params).encode('utf-8')).hexdigest(), json.dumps(params)[0:2000]))
+        if result is not None:
+            return result
+
     payload = {
         "id": 0,
         "jsonrpc": "2.0",
@@ -137,6 +146,10 @@ def call_jsonrpc_api(method, params=None, endpoint=None, auth=None, abort_on_err
 
     if abort_on_error and 'error' in result and result['error'] is not None:
         raise Exception("Got back error from server: %s" % result['error'])
+
+    if use_cache:
+        # store the result
+        cache.set_value(cache_key, result, cache_period=JSONRPC_CACHE_PERIOD)
 
     return result
 
@@ -233,7 +246,7 @@ def weighted_average(value_weight_list):
 
 
 def json_dthandler(obj):
-    #if bytes, convert to string
+    # if bytes, convert to string
     if isinstance(obj, bytes):
         obj = str(obj, 'utf-8')
 
@@ -285,7 +298,6 @@ def stream_fetch(urls, completed_callback, urls_group_size=50, urls_group_time_s
             return completed_callback(completed_urls)
 
     def process_group(group):
-        group_results = []
         pool = gevent.pool.Pool(urls_group_size)
         for url in group:
             if not is_valid_url(url, allow_no_protocol=True):
@@ -304,11 +316,11 @@ def stream_fetch(urls, completed_callback, urls_group_size=50, urls_group_time_s
     urls = list(set(urls))  # remove duplicates (so we only fetch any given URL, once)
     groups = grouper(urls_group_size, urls)
     for i in range(len(groups)):
-        #logger.debug("Stream fetching group %i of %i..." % (i, len(groups)))
+        # logger.debug("Stream fetching group %i of %i..." % (i, len(groups)))
         group = groups[i]
         if urls_group_time_spacing and i != 0:
             gevent.spawn_later(urls_group_time_spacing * i, process_group, group)
-            #^ can leave to overlapping if not careful
+            # ^ can leave to overlapping if not careful
         else:
             process_group(group)  # should 'block' until each group processing is complete
 
@@ -361,7 +373,7 @@ def fetch_image(url, folder, filename, max_size=20 * 1024, formats=['png'], dime
 def date_param(strDate):
     try:
         return calendar.timegm(dateutil.parser.parse(strDate).utctimetuple())
-    except Exception as e:
+    except:
         return False
 
 
@@ -389,7 +401,7 @@ def is_valid_json(data, schema):
 def next_interval_date(interval):
     try:
         generator = parse_iso8601_interval(interval)
-    except Exception as e:
+    except:
         return None
 
     def ts(dt):
@@ -402,7 +414,7 @@ def next_interval_date(interval):
         try:
             previous = next
             next = next(generator)
-        except Exception as e:
+        except:
             break
 
     if ts(next) < ts(now):

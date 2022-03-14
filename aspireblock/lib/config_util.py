@@ -109,7 +109,7 @@ def generate_config_file(filename, config_args, known_config={}, overwrite=False
 def extract_gasp_config():
     bitcoincore_config = {}
 
-    # Figure out the path to the bitcoin.conf file
+    # Figure out the path to the gasp.conf file
     if platform.system() == 'Darwin':
         btc_conf_file = os.path.expanduser('~/Library/Application Support/AspireGas/')
     elif platform.system() == 'Windows':
@@ -118,11 +118,11 @@ def extract_gasp_config():
         btc_conf_file = os.path.expanduser('~/.gasp')
     btc_conf_file = os.path.join(btc_conf_file, 'gasp.conf')
 
-    # Extract contents of bitcoin.conf to build service_url
+    # Extract contents of gasp.conf to build service_url
     if os.path.exists(btc_conf_file):
         conf = {}
         with open(btc_conf_file, 'r') as fd:
-            # Bitcoin Core accepts empty rpcuser, not specified in btc_conf_file
+            # AspireGas Core accepts empty rpcuser, not specified in btc_conf_file
             for line in fd.readlines():
                 if '#' in line or '=' not in line:
                     continue

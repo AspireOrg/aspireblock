@@ -22,6 +22,7 @@ import jsonrpc
 import pymongo
 
 from aspireblock.lib import config, cache, database, util, blockchain, blockfeed, messages
+from aspireblock.lib.modules import dex
 from aspireblock.lib.processor import API
 
 API_MAX_LOG_SIZE = 10 * 1024 * 1024  # max log size of 20 MB before rotation (make configurable later)
@@ -169,6 +170,16 @@ def serve_api():
                  'end_block': end_block,
                  }, abort_on_error=True)['result']
 
+            address_dict['proofofwork'] = util.call_jsonrpc_api(
+                "get_proofofwork",
+                {'filters': [{'field': 'address', 'op': '==', 'value': address},
+                             {'field': 'mined', 'op': '>', 'value': 0}],
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
             address_dict['burns'] = util.call_jsonrpc_api(
                 "get_burns",
                 {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
@@ -187,7 +198,6 @@ def serve_api():
                  'start_block': start_block,
                  'end_block': end_block,
                  }, abort_on_error=True)['result']
-            #^ with filterop == 'or', we get all sends where this address was the source OR destination
 
             address_dict['sweeps'] = util.call_jsonrpc_api(
                 "get_sweeps",
@@ -362,11 +372,7 @@ def serve_api():
     def proxy_to_aspired(method='', params=[]):
         if method == 'sql':
             raise Exception("Invalid method")
-        result = None
-        cache_key = None
-
         result = util.call_jsonrpc_api(method, params)
-
         if 'error' in result:
             if result['error'].get('data', None):
                 errorMsg = result['error']['data'].get('message', result['error']['message'])
@@ -529,9 +535,7 @@ def serve_api():
 
     # make a new RotatingFileHandler for the access log.
     api_logger = logging.getLogger("api_log")
-    h = logging_handlers.RotatingFileHandler(
-        os.path.join(config.log_dir, "server%s.api.log" % config.net_path_part),
-        'a', API_MAX_LOG_SIZE, API_MAX_LOG_COUNT)
+    h = logging_handlers.RotatingFileHandler(os.path.join(config.log_dir, "server%s.api.log" % config.net_path_part), 'a', API_MAX_LOG_SIZE, API_MAX_LOG_COUNT)
     api_logger.setLevel(logging.INFO)
     api_logger.addHandler(h)
     api_logger.propagate = False

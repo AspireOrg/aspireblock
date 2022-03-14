@@ -1,8 +1,8 @@
-import os
 import logging
 import pymongo
 
-from aspireblock.lib import config, cache, util
+from aspireblock.lib import config
+from aspireblock.lib import cache
 from aspireblock.lib.processor import RollbackProcessor
 
 logger = logging.getLogger(__name__)
@@ -72,7 +72,7 @@ def reset_db_state():
     }, upsert=True)
     app_config = config.mongo_db.app_config.find()[0]
 
-    # reinitialize some internal aspires
+    # reinitialize some internal counters
     config.state['my_latest_block'] = {'block_index': 0}
     config.state['last_message_index'] = -1
 

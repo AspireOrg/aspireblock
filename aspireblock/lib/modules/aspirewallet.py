@@ -185,7 +185,7 @@ def get_preferences(wallet_id, for_login=False, network=None):
     if for_login:  # record user login
         ip = flask.request.headers.get('X-Real-Ip', flask.request.remote_addr)
         ua = flask.request.headers.get('User-Agent', '')
-        config.mongo_db.login_history.insert({'wallet_id': wallet_id, 'when': datetime.datetime.utcnow(), 'network': network, 'action': 'login', 'ip': ip, 'ua': ua})
+        config.mongo_db.login_history.insert({'wallet_id': wallet_id, 'when': now, 'network': network, 'action': 'login', 'ip': ip, 'ua': ua})
 
     result['last_touched'] = calendar.timegm(time.gmtime())
     config.mongo_db.preferences.save(result)
@@ -501,7 +501,11 @@ def store_wallet_message(msg, msg_data, decorate=True):
 @MessageProcessor.subscribe(priority=CORE_FIRST_PRIORITY - 0.5)
 def handle_invalid(msg, msg_data):
     # don't process invalid messages, but do forward them along to clients
-    status = msg_data.get('status', 'valid').lower()
+    pre_status = msg_data.get('status', 'valid')
+    if type(pre_status) == str:
+        status = msg_data.get('status', 'valid').lower()
+    else:
+        status = str(pre_status)
     if status.startswith('invalid'):
         if config.state['cp_latest_block_index'] - config.state['my_latest_block']['block_index'] < config.MAX_REORG_NUM_BLOCKS:
             # forward along via message feed, except while we're catching up

@@ -93,7 +93,7 @@ def init_base(args):
     ##############
     # THINGS WE CONNECT TO
 
-    # backend (e.g. bitcoind)
+    # backend (e.g. gaspd)
     global BACKEND_CONNECT
     if args.backend_connect:
         BACKEND_CONNECT = args.backend_connect
@@ -232,11 +232,6 @@ def init_base(args):
         assert int(REDIS_DATABASE) >= 0 and int(REDIS_DATABASE) <= 16
     except:
         raise Exception("Please specify a valid redis-database configuration parameter (between 0 and 16 inclusive)")
-
-    global BLOCKTRAIL_API_KEY
-    BLOCKTRAIL_API_KEY = args.blocktrail_api_key or None
-    global BLOCKTRAIL_API_SECRET
-    BLOCKTRAIL_API_SECRET = args.blocktrail_api_secret or None
 
     ##############
     # THINGS WE SERVE

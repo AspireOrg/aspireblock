@@ -1,22 +1,22 @@
 """
 blockfeed: sync with and process new blocks from aspire-server
 """
-import re
-import os
 import sys
 import json
-import copy
 import logging
 import datetime
 import decimal
-import configparser
 import time
-import itertools
 import pymongo
-import gevent
 
-from aspireblock.lib import config, util, blockchain, cache, database
-from aspireblock.lib.processor import MessageProcessor, MempoolMessageProcessor, BlockProcessor, CaughtUpProcessor
+from aspireblock.lib import config
+from aspireblock.lib import util
+from aspireblock.lib import cache
+from aspireblock.lib import database
+from aspireblock.lib.processor import MessageProcessor
+from aspireblock.lib.processor import MempoolMessageProcessor
+from aspireblock.lib.processor import BlockProcessor
+from aspireblock.lib.processor import CaughtUpProcessor
 
 D = decimal.Decimal
 logger = logging.getLogger(__name__)
@@ -41,20 +41,20 @@ def process_cp_blockfeed():
     config.state['last_message_index'] = -1  # initialize (last processed message index)
     config.state['cp_latest_block_index'] = 0  # last block that was successfully processed by aspire
     config.state['cp_backend_block_index'] = 0  # the latest block height as reported by the cpd blockchain backend
-    config.state['cp_caught_up'] = False  # whether aspire-server is caught up to the backend (e.g. bitcoind)
+    config.state['cp_caught_up'] = False  # whether aspire-server is caught up to the backend (e.g. gaspd)
     config.state['caught_up_started_events'] = False
-    #^ set after we are caught up and start up the recurring events that depend on us being caught up with the blockchain
+    # ^ set after we are caught up and start up the recurring events that depend on us being caught up with the blockchain
 
     # enabled processor functions
-    logger.debug("Enabled Message Processor Functions {0}".format(MessageProcessor.active_functions()))
-    logger.debug("Enabled Block Processor Functions {0}".format(BlockProcessor.active_functions()))
+    logger.info("Enabled Message Processor Functions {0}".format(MessageProcessor.active_functions()))
+    logger.info("Enabled Block Processor Functions {0}".format(BlockProcessor.active_functions()))
 
     def publish_mempool_tx():
         """fetch new tx from mempool"""
         mempool_txs = config.mongo_db.mempool.find(projection={'tx_hash': True})
         tx_hashes = {t['tx_hash'] for t in mempool_txs}
 
-        params = { # get latest 1000 entries from mempool
+        params = {  # get latest 1000 entries from mempool
             'order_by': 'timestamp',
             'order_dir': 'DESC'
         }
@@ -79,9 +79,9 @@ def process_cp_blockfeed():
                 del(tx['_id'])
                 tx['_category'] = tx['category']
                 tx['_message_index'] = 'mempool'
-                logger.debug("Spotted mempool tx: %s" % tx)
+                logger.info("Spotted mempool tx: %s" % tx)
                 for function in MempoolMessageProcessor.active_functions():
-                    logger.debug('starting {} (mempool)'.format(function['function']))
+                    logger.info('starting {} (mempool)'.format(function['function']))
                     # TODO: Better handling of double parsing
                     try:
                         result = function['function'](tx, json.loads(tx['bindings'])) or None
@@ -93,7 +93,7 @@ def process_cp_blockfeed():
                         raise Exception(
                             "Message processor returned unknown code -- processor: '%s', result: '%s'" %
                             (function, result))
-        logger.debug("Mempool refresh: {} entries retrieved from aspire-server, {} new".format(len(new_txs['result']) if new_txs else '??', (len(new_txs['result']) - num_skipped_tx) if new_txs else '??'))
+        logger.info("Mempool refresh: {} entries retrieved from aspire-server, {} new".format(len(new_txs['result']) if new_txs else '??', (len(new_txs['result']) - num_skipped_tx) if new_txs else '??'))
 
     def clean_mempool_tx():
         """clean mempool transactions older than MAX_REORG_NUM_BLOCKS blocks"""
@@ -102,15 +102,15 @@ def process_cp_blockfeed():
 
     def parse_message(msg):
         msg_data = json.loads(msg['bindings'])
-        logger.debug("Received message %s: %s ..." % (msg['message_index'], msg))
+        logger.info("Received message %s: %s ..." % (msg['message_index'], msg))
 
         # out of order messages should not happen (anymore), but just to be sure
         if msg['message_index'] != config.state['last_message_index'] + 1 and config.state['last_message_index'] != -1:
-            raise Exception("Message index mismatch. Next message's message_index: %s, last_message_index: %s" % (
+            logger.error("Message index mismatch. Next message's message_index: %s, last_message_index: %s" % (
                 msg['message_index'], config.state['last_message_index']))
 
         for function in MessageProcessor.active_functions():
-            logger.debug('MessageProcessor: starting {}'.format(function['function']))
+            logger.info('MessageProcessor: starting {}'.format(function['function']))
             # TODO: Better handling of double parsing
             try:
                 result = function['function'](msg, msg_data) or None
@@ -122,17 +122,14 @@ def process_cp_blockfeed():
                     'ABORT_BLOCK_PROCESSING'):  # abort all further block processing, including that of all messages in the block
                 break
             elif result not in (True, False, None):
-                raise Exception(
-                    "Message processor returned unknown code -- processor: '%s', result: '%s'" %
-                    (function, result))
+                raise Exception("Message processor returned unknown code -- processor: '%s', result: '%s'" % (function, result))
 
         config.state['last_message_index'] = msg['message_index']
         return 'ABORT_BLOCK_PROCESSING' if result == 'ABORT_BLOCK_PROCESSING' else None
 
     def parse_block(block_data):
         config.state['cur_block'] = block_data
-        config.state['cur_block']['block_time_obj'] \
-            = datetime.datetime.utcfromtimestamp(config.state['cur_block']['block_time'])
+        config.state['cur_block']['block_time_obj'] = datetime.datetime.utcfromtimestamp(config.state['cur_block']['block_time'])
         config.state['cur_block']['block_time_str'] = config.state['cur_block']['block_time_obj'].isoformat()
 
         for msg in config.state['cur_block']['_messages']:
@@ -209,7 +206,7 @@ def process_cp_blockfeed():
             logger.info(
                 "Heartbeat (%s, block: %s, caught up: %s)"
                 % (iteration, config.state['my_latest_block']['block_index'], fuzzy_is_caught_up()))
-        logger.debug(
+        logger.info(
             "iteration: ap %s/%s, cp_latest_block_index: %s, my_latest_block: %s" % (autopilot, autopilot_runner,
                                                                                      config.state['cp_latest_block_index'], config.state['my_latest_block']['block_index']))
 

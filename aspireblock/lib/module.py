@@ -1,8 +1,7 @@
+from configobj import ConfigObj
 import os
-import sys
 import imp
 import logging
-from configobj import ConfigObj
 
 from aspireblock.lib import config
 
@@ -60,10 +59,10 @@ def load_all():
                 continue
             # print(processor_functions)
             for func_name, user_settings in list(container.items()):
-                #print(func_name, user_settings)
+                # print(func_name, user_settings)
                 if func_name in processor_functions:
                     params = get_mod_params_dict(user_settings)
-                    #print(func_name, params)
+                    # print(func_name, params)
                     for param_name, param_value in list(params.items()):
                         processor_functions[func_name][param_name] = param_value
                 else:
@@ -76,7 +75,7 @@ def toggle(mod, enabled=True):
     try:
         imp.find_module(mod)
     except:
-        print(("Unable to find module %s" % mod))
+        print(('Unable to find module %s' % mod))
         return
     mod_config_path = os.path.join(config.config_dir, CONFIG_FILENAME % config.net_path_part)
     module_conf = ConfigObj(mod_config_path)
@@ -89,17 +88,17 @@ def toggle(mod, enabled=True):
         except:
             module_conf['LoadModule'][mod].insert(0, enabled)
     except:
-        if not "LoadModule" in module_conf:
+        if 'LoadModule' not in module_conf:
             module_conf['LoadModule'] = {}
         module_conf['LoadModule'][mod] = enabled
     module_conf.write()
-    print(("%s Module %s" % ("Enabled" if enabled else "Disabled", mod)))
+    print(('%s Module %s' % ('Enabled' if enabled else 'Disabled', mod)))
 
 
 def list_all():
     mod_config_path = os.path.join(config.config_dir, CONFIG_FILENAME % config.net_path_part)
     module_conf = ConfigObj(mod_config_path)
     for name, modules in list(module_conf.items()):
-        print(("Configuration for %s" % name))
+        print(('Configuration for %s' % name))
         for module, settings in list(modules.items()):
-            print(("     %s %s: %s" % (("Module" if name == "LoadModule" else "Function"), module, settings)))
+            print(('     %s %s: %s' % (('Module' if name == 'LoadModule' else 'Function'), module, settings)))
