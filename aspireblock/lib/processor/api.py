@@ -190,6 +190,35 @@ def serve_api():
                  }, abort_on_error=True)['result']
             #^ with filterop == 'or', we get all sends where this address was the source OR destination
 
+            address_dict['orders'] = util.call_jsonrpc_api(
+                "get_orders",
+                {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['order_matches'] = util.call_jsonrpc_api(
+                "get_order_matches",
+                {'filters': [{'field': 'tx0_address', 'op': '==', 'value': address}, {'field': 'tx1_address', 'op': '==', 'value': address}, ],
+                 'filterop': 'or',
+                 'order_by': 'tx0_block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['btcpays'] = util.call_jsonrpc_api(
+                "get_btcpays",
+                {'filters': [{'field': 'source', 'op': '==', 'value': address}, {'field': 'destination', 'op': '==', 'value': address}],
+                 'filterop': 'or',
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
             address_dict['issuances'] = util.call_jsonrpc_api(
                 "get_issuances",
                 {'filters': [{'field': 'issuer', 'op': '==', 'value': address}, {'field': 'source', 'op': '==', 'value': address}],
@@ -209,6 +238,25 @@ def serve_api():
                  'end_block': end_block,
                  }, abort_on_error=True)['result']
 
+            address_dict['bets'] = util.call_jsonrpc_api(
+                "get_bets",
+                {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['bet_matches'] = util.call_jsonrpc_api(
+                "get_bet_matches",
+                {'filters': [{'field': 'tx0_address', 'op': '==', 'value': address}, {'field': 'tx1_address', 'op': '==', 'value': address}, ],
+                 'filterop': 'or',
+                 'order_by': 'tx0_block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
             address_dict['dividends'] = util.call_jsonrpc_api(
                 "get_dividends",
                 {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
@@ -218,6 +266,52 @@ def serve_api():
                  'end_block': end_block,
                  }, abort_on_error=True)['result']
 
+            address_dict['cancels'] = util.call_jsonrpc_api(
+                "get_cancels",
+                {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['bet_expirations'] = util.call_jsonrpc_api(
+                "get_bet_expirations",
+                {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['order_expirations'] = util.call_jsonrpc_api(
+                "get_order_expirations",
+                {'filters': [{'field': 'source', 'op': '==', 'value': address}, ],
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['bet_match_expirations'] = util.call_jsonrpc_api(
+                "get_bet_match_expirations",
+                {'filters': [{'field': 'tx0_address', 'op': '==', 'value': address}, {'field': 'tx1_address', 'op': '==', 'value': address}, ],
+                 'filterop': 'or',
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
+
+            address_dict['order_match_expirations'] = util.call_jsonrpc_api(
+                "get_order_match_expirations",
+                {'filters': [{'field': 'tx0_address', 'op': '==', 'value': address}, {'field': 'tx1_address', 'op': '==', 'value': address}, ],
+                 'filterop': 'or',
+                 'order_by': 'block_index',
+                 'order_dir': 'asc',
+                 'start_block': start_block,
+                 'end_block': end_block,
+                 }, abort_on_error=True)['result']
             return address_dict
 
         now_ts = calendar.timegm(time.gmtime())

@@ -24,7 +24,10 @@ logger = logging.getLogger(__name__)
 
 @MessageProcessor.subscribe(priority=CORE_FIRST_PRIORITY - 1)  # this priority here is important
 def parse_insert(msg, msg_data):
-    if msg['command'] == 'insert' and msg['category'] not in ['debits', 'credits']:
+    if(msg['command'] == 'insert' and
+       msg['category'] not in [
+           "debits", "credits", "order_matches", "bet_matches", "order_expirations",
+           "bet_expirations", "order_match_expirations", "bet_match_expirations", "bet_match_resolutions"]):
         config.mongo_db.transaction_stats.insert({
             'block_index': config.state['cur_block']['block_index'],
             'block_time': config.state['cur_block']['block_time_obj'],
