@@ -19,6 +19,7 @@ from aspireblock.lib import util
 from aspireblock.lib import blockchain
 from aspireblock.lib import blockfeed
 from aspireblock.lib import messages
+from aspireblock.lib.modules import dex
 from aspireblock.lib.processor import API
 
 API_MAX_LOG_SIZE = 10 * 1024 * 1024  # max log size of 20 MB before rotation (make configurable later)
