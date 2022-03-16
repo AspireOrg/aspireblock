@@ -46,8 +46,8 @@ def process_cp_blockfeed():
     # ^ set after we are caught up and start up the recurring events that depend on us being caught up with the blockchain
 
     # enabled processor functions
-    logger.debug("Enabled Message Processor Functions {0}".format(MessageProcessor.active_functions()))
-    logger.debug("Enabled Block Processor Functions {0}".format(BlockProcessor.active_functions()))
+    logger.info("Enabled Message Processor Functions {0}".format(MessageProcessor.active_functions()))
+    logger.info("Enabled Block Processor Functions {0}".format(BlockProcessor.active_functions()))
 
     def publish_mempool_tx():
         """fetch new tx from mempool"""
@@ -79,9 +79,9 @@ def process_cp_blockfeed():
                 del(tx['_id'])
                 tx['_category'] = tx['category']
                 tx['_message_index'] = 'mempool'
-                logger.debug("Spotted mempool tx: %s" % tx)
+                logger.info("Spotted mempool tx: %s" % tx)
                 for function in MempoolMessageProcessor.active_functions():
-                    logger.debug('starting {} (mempool)'.format(function['function']))
+                    logger.info('starting {} (mempool)'.format(function['function']))
                     # TODO: Better handling of double parsing
                     try:
                         result = function['function'](tx, json.loads(tx['bindings'])) or None
@@ -93,7 +93,7 @@ def process_cp_blockfeed():
                         raise Exception(
                             "Message processor returned unknown code -- processor: '%s', result: '%s'" %
                             (function, result))
-        logger.debug("Mempool refresh: {} entries retrieved from aspire-server, {} new".format(len(new_txs['result']) if new_txs else '??', (len(new_txs['result']) - num_skipped_tx) if new_txs else '??'))
+        logger.info("Mempool refresh: {} entries retrieved from aspire-server, {} new".format(len(new_txs['result']) if new_txs else '??', (len(new_txs['result']) - num_skipped_tx) if new_txs else '??'))
 
     def clean_mempool_tx():
         """clean mempool transactions older than MAX_REORG_NUM_BLOCKS blocks"""
@@ -102,7 +102,7 @@ def process_cp_blockfeed():
 
     def parse_message(msg):
         msg_data = json.loads(msg['bindings'])
-        logger.debug("Received message %s: %s ..." % (msg['message_index'], msg))
+        logger.info("Received message %s: %s ..." % (msg['message_index'], msg))
 
         # out of order messages should not happen (anymore), but just to be sure
         if msg['message_index'] != config.state['last_message_index'] + 1 and config.state['last_message_index'] != -1:
@@ -112,7 +112,7 @@ def process_cp_blockfeed():
                 msg['message_index'], config.state['last_message_index']))
 
         for function in MessageProcessor.active_functions():
-            logger.debug('MessageProcessor: starting {}'.format(function['function']))
+            logger.info('MessageProcessor: starting {}'.format(function['function']))
             # TODO: Better handling of double parsing
             try:
                 result = function['function'](msg, msg_data) or None
@@ -208,7 +208,7 @@ def process_cp_blockfeed():
             logger.info(
                 "Heartbeat (%s, block: %s, caught up: %s)"
                 % (iteration, config.state['my_latest_block']['block_index'], fuzzy_is_caught_up()))
-        logger.debug(
+        logger.info(
             "iteration: ap %s/%s, cp_latest_block_index: %s, my_latest_block: %s" % (autopilot, autopilot_runner,
                                                                                      config.state['cp_latest_block_index'], config.state['my_latest_block']['block_index']))
 
